@@ -1,0 +1,24 @@
+Funciones:
+
+Cargar archivo
+Repartir fichas (Buscar cochina)
+Armas Colas (verifica lo de la ronda) 
+Revolver fichas 
+Verficar Jugada (recibe las fichas y devuelve las "jugables")
+Jugar (recibe las "jugables", pregunta al usuario cual quiere jugar, 
+la pone ficha, y le quita una ficha) 
+Verificar Pasos
+Cambiar Turno (encolar y desencolar al jugador en la cola del juego)
+Verificar fichas 
+Contar puntos 
+Revision puntos (para mostrar el mensaje)
+Sumar puntos (normal)
+Sumar puntos (trancado) 
+Imprimir mensaje salida   
+
+Variables globales:
+- Numero de ronda
+- Puntajes (lista enlazada)
+- Turno actual
+- Numero de "pasos"
+
