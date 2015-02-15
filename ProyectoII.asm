@@ -137,24 +137,6 @@ loopPrincipal:
 		
 	continuarJuego:
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-		
-
 
 li 		$v0, 10
 		syscall	
@@ -219,7 +201,8 @@ extraerPiedras:
 		move 	$t1,$a0
 
 		li $t4, 42
-		
+		la $t5, fichas
+
 		cicloExtraer:
 
 				# Se lee el primer caracter de la linea
@@ -227,22 +210,47 @@ extraerPiedras:
 				srl       $t2, $t2, 0
 				andi 	$t2,$t2,255
 
-				sw $t2,letra
-				li $v0, 4
-				la $a0,letra
-				syscall	
+				move $fp, $sp #Prologo
+				addi $sp $sp -4
+				sw $fp, 4($sp) 
+				addi $sp, $sp, -4
+				sw $ra, 4($sp)
+
+				jal AgregarSimbolo
+
+				lw $ra, 4($sp) #Epilogo
+				addi $sp, $sp, 4
+				lw $fp, 4($sp)
+				addi $sp, $sp, 4				
+
+				#sw $t2,letra
+				#li $v0, 4
+				#la $a0,letra
+				#syscall	
 
 				# Se lee el segundo caracter de la linea:
 
 				lw 		$t2, ($t1)
 				srl       $t2, $t2, 8
 				andi 	$t2,$t2,255
-		
-				sw $t2,letra
 
-				li $v0, 4
-				la $a0,letra
-				syscall
+				move $fp, $sp #Prologo
+				addi $sp $sp -4
+				sw $fp, 4($sp) 
+				addi $sp, $sp, -4
+				sw $ra, 4($sp)				
+
+				jal AgregarSimbolo
+
+				lw $ra, 4($sp) #Epilogo
+				addi $sp, $sp, 4
+				lw $fp, 4($sp)
+				addi $sp, $sp, 4
+		
+				#sw $t2,letra
+				#li $v0, 4
+				#la $a0,letra
+				#syscall
 
 
 				# Se lee el tercer caracter de la linea:
@@ -251,28 +259,79 @@ extraerPiedras:
 				srl       $t2, $t2, 16
 				andi 	$t2,$t2,255
 
-				sw $t2,letra
+				move $fp, $sp #Prologo
+				addi $sp $sp -4
+				sw $fp, 4($sp) 
+				addi $sp, $sp, -4
+				sw $ra, 4($sp)
 
-				li $v0, 4
-				la $a0,letra
-					syscall	
+				jal AgregarSimbolo
+
+				lw $ra, 4($sp) #Epilogo
+				addi $sp, $sp, 4
+				lw $fp, 4($sp)
+				addi $sp, $sp, 4
+
+				#sw $t2,letra
+				#li $v0, 4
+				#la $a0,letra
+				#syscall	
 			
 				# Se lee el cuarto caracter de la linea:
 	
 				lw 		$t2, ($t1)
 				srl       $t2, $t2, 24
 				andi 	$t2,$t2,255
-				sw $t2,letra
 
-				li $v0, 4
-				la $a0,letra
-				syscall	
+				move $fp, $sp #Prologo
+				addi $sp $sp -4
+				sw $fp, 4($sp) 
+				addi $sp, $sp, -4
+				sw $ra, 4($sp)
+
+				jal AgregarSimbolo
+
+				lw $ra, 4($sp) #Epilogo
+				addi $sp, $sp, 4
+				lw $fp, 4($sp)
+				addi $sp, $sp, 4
+
+				#sw $t2,letra
+				#li $v0, 4
+				#la $a0,letra
+				#syscall	
 
 				addi $t1,$t1,4
 				addi $t4,$t4,-1
 				bnez $t4,cicloExtraer
 
 				jr $ra
+
+
+AgregarSimbolo:
+	# La entrada por ahora esta en $t2 (hay que arreglar las convenciones)
+		
+	li $t5, 48  # Corresponde al 0 en ASCII
+	li $t6, 41  # Corresponde al ) en ASCII
+
+	bgeu $t2,$t5,esNumero				
+	beq  $t2,$t6,cambiaCaja
+	blt  $t2 $t5 cambiaCaja
+
+
+	esNumero:
+		
+		addi $t2,$t2,-48
+		
+		imprimir_i($t2)		
+
+	cambiaCaja:
+		
+		
+	jr $ra
+
+
+
 
 
 
