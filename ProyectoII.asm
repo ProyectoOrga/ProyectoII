@@ -16,9 +16,10 @@ jugadores:		.word     0
 tablero:			.word     0
 rondas: 			.word	0
 nuevoJuego:		.word     0
+fichas:			.word     0
 piedrasArchivo:	.space  169
 nombre:			.space   20
-fichas:			.space  112
+
 letra:			.word     0
 nombreArchivo:		.asciiz "/home/prmm95/Desktop/CI3815/ProyectoII-Github/PIEDRAS"
 saltoDeLinea:		.asciiz "\n"
@@ -49,7 +50,7 @@ texto:			.asciiz " introduzca su nombre :   "
 .macro reservarEspacio(%espacio) # Macro para reservar espacio de memoria
 
 	li		$v0  9
-	move		$a0  %espacio
+	li		$a0  %espacio
 	syscall
 .end_macro 
 
@@ -201,7 +202,23 @@ extraerPiedras:
 		move 	$t1,$a0
 
 		li $t4, 42
-		la $t5, fichas
+			
+		#la $t5, fichas
+
+		reservarEspacio(112)
+		sw $v0, fichas	
+		move $t5 $v0
+					
+		# Se reserva el espacio para la primera ficha
+		li $a0,8
+		li $v0,9
+		syscall
+
+		li $t2,9
+		sw $t2,($v0)
+		sw $t2,4($v0)	
+
+		sw $v0 ($t5)
 
 		cicloExtraer:
 
@@ -215,9 +232,17 @@ extraerPiedras:
 				sw $fp, 4($sp) 
 				addi $sp, $sp, -4
 				sw $ra, 4($sp)
+				addi $sp, $sp, -4
+				sw $t4 4($sp)
 
+				move $a3 $t4
+				move $a1,$t5
 				jal AgregarSimbolo
+				move $t5,$v0
 
+
+				lw $t4 4($sp)
+				addi $sp, $sp, 4
 				lw $ra, 4($sp) #Epilogo
 				addi $sp, $sp, 4
 				lw $fp, 4($sp)
@@ -238,10 +263,17 @@ extraerPiedras:
 				addi $sp $sp -4
 				sw $fp, 4($sp) 
 				addi $sp, $sp, -4
-				sw $ra, 4($sp)				
-
+				sw $ra, 4($sp)	
+				addi $sp, $sp, -4
+				sw $t4 4($sp)	
+		
+				move $a3 $t4
+				move $a1,$t5
 				jal AgregarSimbolo
+				move $t5,$v0
 
+				lw $t4 4($sp)
+				addi $sp, $sp, 4
 				lw $ra, 4($sp) #Epilogo
 				addi $sp, $sp, 4
 				lw $fp, 4($sp)
@@ -264,9 +296,16 @@ extraerPiedras:
 				sw $fp, 4($sp) 
 				addi $sp, $sp, -4
 				sw $ra, 4($sp)
+				addi $sp, $sp, -4
+				sw $t4 4($sp)
 
+				move $a1,$t5
+				move $a3 $t4
 				jal AgregarSimbolo
+				move $t5,$v0
 
+				lw $t4 4($sp)
+				addi $sp, $sp, 4
 				lw $ra, 4($sp) #Epilogo
 				addi $sp, $sp, 4
 				lw $fp, 4($sp)
@@ -288,9 +327,17 @@ extraerPiedras:
 				sw $fp, 4($sp) 
 				addi $sp, $sp, -4
 				sw $ra, 4($sp)
+				addi $sp, $sp, -4
+				sw $t4 4($sp)
 
+				move $a1,$t5
+				move $a3 $t4
 				jal AgregarSimbolo
+				move $t5,$v0
 
+
+				lw $t4 4($sp)
+				addi $sp, $sp, 4
 				lw $ra, 4($sp) #Epilogo
 				addi $sp, $sp, 4
 				lw $fp, 4($sp)
@@ -309,32 +356,54 @@ extraerPiedras:
 
 
 AgregarSimbolo:
-	# La entrada por ahora esta en $t2 (hay que arreglar las convenciones)
+	# La entrada por ahora esta en $t2 (hay que arreglar las convenciones $a0 )
+	# La direccion de las fichas por ahora esta en $t5
+	# El numero casillas de la memoria recorrida se almacena en $a3
 		
-	li $t5, 48  # Corresponde al 0 en ASCII
+	li $s0, 48  # Corresponde al 0 en ASCII
 	li $t6, 41  # Corresponde al ) en ASCII
 
-	bgeu $t2,$t5,esNumero				
+	bgeu $t2,$s0,esNumero				
 	beq  $t2,$t6,cambiaCaja
-	blt  $t2 $t5 cambiaCaja
+	blt  $t2 $s0 regresar
 
 
 	esNumero:
 		
 		addi $t2,$t2,-48
-		
-		imprimir_i($t2)		
+		imprimir_i($t2)
+
+		lw $t4 ($a1)
+		move $t7,$t4
+		lw $t4,($t4)
+
+		beq $t4,9,guardar
+		bne $t4,9,siguiente
+
+		guardar:
+			sw $t2,($t7)
+			b regresar
+
+		siguiente:
+			sw $t2,4($t7)
+			b regresar
 
 	cambiaCaja:
+
+		bne $a3 1 crearCaja
+		beq $a3 1 regresar
+
+	crearCaja:
+		reservarEspacio(8)
+		li $t7 9
+		sw $t7 ($v0)
+		sw $t7 4($v0)
+		addi $a1,$a1,4
+		sw $v0,($a1)
 		
-		
-	jr $ra
-
-
-
-
-
-
+	regresar:	
+		move $v0,$a1	
+		jr $ra
 
 CrearClaseJugador:
 	
