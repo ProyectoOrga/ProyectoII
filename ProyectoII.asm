@@ -171,9 +171,9 @@ loopPrincipal:
 			move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
 			jal RecibirOpcionJugador
 			
-			#jal VerificarJugada
+			jal VerificarJugada
 			
-			#jal ActualizarTablero
+			jal ActualizarTablero
 			
 			#jal ImprimirTablero
 	
@@ -657,12 +657,21 @@ CrearClaseTablero:
 	# 4 bytes que almacenan el numero de elementos que tiene la lista
 	# 4 bytes que "apuntan" al ultimo elemento de la lista
 	
-	reservarEspacio(12)
+	reservarEspacio(12) # Cabecera del tablero
+				
+	move $t1 $v0
 		
-	sw $zero ($v0)
+	#sw $zero ($v0) # Primer elemento del tablero
 	li $a0 0
-	sw $a0 4($v0)
-	sw $zero 8($v0)
+	sw $a0 4($v0) # Numero de elementos del tablero
+	sw $zero 8($v0) # Primer elemento del tablero
+	
+	reservarEspacio(224)
+	
+	sw $v0 ($t1)
+	sw $v0 4($t1)
+	
+	move $t1 $v0
 	
 	jr $ra
 
