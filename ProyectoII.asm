@@ -12,20 +12,19 @@
 
 		.data
 
-jugadores:			.word     0
-tablero:				.word     0
-rondas:	 			.word	0
-nuevoJuego:			.word     0
-fichas:				.word     0
-tieneCochina:			.word 	0
-turnoRonda:			.word	0  
-turnoActual:			.word	0  
+jugadores:		.word     0
+tablero:		.word     0
+rondas:	 		.word	0
+nuevoJuego:		.word     0
+fichas:			.word     0
+tieneCochina:		.word 	0
+turnoRonda:		.word	0  
+turnoActual:		.word	0  
 piedrasArchivo:		.space  169
-nombre:				.space   20
-letra:				.word     0
-nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
+nombre:			.space   20
+letra:			.word     0
+nombreArchivo:		.asciiz "/home/alejandra/Dropbox/Organizacion del computador/Proyectos/Proyecto IIGIT/PIEDRAS"
 parentesisAbre:		.asciiz "("
-<<<<<<< HEAD
 parentesisCierra:	.asciiz ")"
 punto:			.asciiz "."
 dosPuntos:		.asciiz " :  "
@@ -34,35 +33,22 @@ mensaje: 		.asciiz "Jugador "
 Introducir:		.asciiz "Introduzca su opcion de juego:  "
 Invalido:		.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
 texto:			.asciiz " introduzca su nombre: "
-=======
-parentesisCierra:		.asciiz ")"
-punto:				.asciiz "."
-dosPuntos:			.asciiz " :  "
-saltoDeLinea:			.asciiz "\n"
-mensaje: 				.asciiz "Jugador "
-texto:				.asciiz " Introduzca su nombre: "
->>>>>>> 44d0158e469deab7d2cb73d0e7787598f4686668
-mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
-Opcion: 	 			.asciiz " Opcion "
-mensajeJuego:			.asciiz " Introduzca el numero correspondiente a la piedra que desea jugar: "
-#nombre:		
-
-
-		.text
+		
+	.text
 
 ########################################################
 #                DECLARACION DE MACROS                 #                      
 ########################################################
-
-.macro imprimir_t (%texto) #Macro para imprimir un texto
-	li 		$v0, 4
-	la		$a0, %texto
-	syscall
-.end_macro
 		
 .macro imprimir_i (%numero) #Macro para imprimir un entero
 	li		$v0, 1
 	move		$a0, %numero
+	syscall
+.end_macro
+
+.macro imprimir_t(%text) #Macro para imprimir un texto
+	li 		$v0  4
+	la		$a0  %text
 	syscall
 .end_macro
 
@@ -106,12 +92,9 @@ main:
 		jal 		CrearClaseTablero
 		sw 		$v0 tablero
 
-
-
 		li 		$a0 1
 		sw		$a0 rondas 	# NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
-
 
 		# Se inicializan las variables de los turnos del juego
 
@@ -175,7 +158,7 @@ loopPrincipal:
 			lw $a0 turnoActual
 			lw $a1 jugadores
 			jal mostrarFichas
-<<<<<<< HEAD
+
 			move $a0 $v0	# $a0 es el argumento de entrada de la funcion RecibirOpcionJugador
 			move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
 			jal RecibirOpcionJugador
@@ -186,11 +169,6 @@ loopPrincipal:
 			
 			#jal ImprimirTablero
 	
-=======
-
-			# Recibe como argumento el jugador y el tablero:
-			jal recibeyVerificaSeleccion
->>>>>>> 44d0158e469deab7d2cb73d0e7787598f4686668
 
 		li 		$v0, 10
 				syscall	
@@ -788,9 +766,6 @@ mostrarFichas:
 			jr $ra
 
 #------------------------------------------------------#
-
-<<<<<<< HEAD
-#------------------------------------------------------#
 RecibirOpcionJugador:
 
 
@@ -843,34 +818,6 @@ RecibirOpcionJugador:
 	 	lw $t2 ($v0)
 	 	lw $t3 4($v0)
 	 	jr $ra
-
-
-
-=======
-recibeyVerificaSeleccion:
->>>>>>> 44d0158e469deab7d2cb73d0e7787598f4686668
-
-		# Descripcion de la funcion:
-		#	Recibe la opcion de juego del jugador actua
-		# Planificador de registros:
-		#  	Registros de entrada:
-		#		* $a0: 
-		#    	* $a1: 
-		#  	Registros de salida:
-		#
-		# [[Nombre[4],Puntos[4],Fichas[4],PuntosGrupo[4]],[].[].[]
-		#    = numeroJugador*(4*4)+2*(4)
-		#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)	
-
-		imprimir_t(mensajeJuego)
-		
-		li $v0,5
-		syscall
-		
-		jr $ra
-
-
-
 
 #------------------------------------------------------#
 	
