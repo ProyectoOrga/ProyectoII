@@ -13,23 +13,27 @@
 		.data
 
 jugadores:		.word     0
-tablero:			.word     0
-rondas: 			.word	0
+tablero:		.word     0
+rondas: 		.word	0
 nuevoJuego:		.word     0
 fichas:			.word     0
 tieneCochina:		.word 	0
 turnoRonda:		.word	0  
 turnoActual:		.word	0  
-piedrasArchivo:	.space  169
+piedrasArchivo:		.space  169
 nombre:			.space   20
 letra:			.word     0
-nombreArchivo:		.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
-parentesisAbre:	.asciiz "("
+nombreArchivo:		.asciiz "/home/alejandra/Dropbox/Organizacion del computador/Proyectos/Proyecto IIGIT/PIEDRAS"
+parentesisAbre:		.asciiz "("
 parentesisCierra:	.asciiz ")"
 punto:			.asciiz "."
+dosPuntos:		.asciiz " :  "
 saltoDeLinea:		.asciiz "\n"
-mensaje: 			.asciiz "Jugador "
+mensaje: 		.asciiz "Jugador "
 texto:			.asciiz " Introduzca su nombre: "
+mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
+Opcion: 	 	.asciiz " Opcion "
+
 #nombre:		
 
 
@@ -70,12 +74,15 @@ main:
 		# Se crea la clase jugador
 		jal 		CrearClaseJugador 
 		sw 		$v0 jugadores
+		lw 		$v0 jugadores
 		
 		# Es un  argumento, hay que cambiar $t7 por $a0 
 		move 	$t7 $v0  # Se estaria trabajando la estructura de datos jugador como algo global (no se si eso es bueno)
 
 		# Pedir nombre a Jugadores
 		jal 		PedirYalmacenarNombreJugadores
+		
+		lw 		$v0 jugadores
 
 		# Se reparten las fichas a los jugadores:
 		lw 		$a0, jugadores
@@ -91,8 +98,8 @@ main:
 
 
 		li 		$a0 1
-		sw		$a0 rondas 		 # NumeroRondas = 1
-		sw		$a0 nuevoJuego    # NuevoJuego = True
+		sw		$a0 rondas 	# NumeroRondas = 1
+		sw		$a0 nuevoJuego   # NuevoJuego = True
 
 
 		# Se inicializan las variables de los turnos del juego
@@ -155,8 +162,8 @@ loopPrincipal:
 			move $s7 $v0
 		
 		continuarJuego:
-			sw $a0 turnoActual
-			sw $a1 jugadores
+			lw $a0 turnoActual
+			lw $a1 jugadores
 			jal mostrarFichas
 	
 
@@ -497,7 +504,7 @@ PedirYalmacenarNombreJugadores:
 	
 	###################################################
 
-	lw $t7,jugadores
+	#lw $t7,jugadores
 
 	li $t1 0
 	li $t9 4
@@ -544,7 +551,9 @@ PedirYalmacenarNombreJugadores:
 		#syscall
 		
 		addi $t1 $t1 1
-		bne $t1 4 loop	
+		bne $t1 4 loop
+			
+	imprimir_t(saltoDeLinea)
 	jr $ra	
 
 #------------------------------------------------------#	
@@ -686,7 +695,7 @@ mostrarFichas:
 		li $t2,4  # Tamano palabra
 		li $t3,2  # Columna que nos interesa
 		li $t8,3  # Numero columna
-
+		
 		mult $t2,$t8
 		mflo $t4 # $t4 = TamanoPalabra*NumeroColumna
 
@@ -698,55 +707,57 @@ mostrarFichas:
 
 		add $t4 $t4 $t5  # Dezamiento
 		add $a1 $a1 $t4 #Realizo el dsplazamiento
-
-
-		  # Obtengo la direccion del arreglo de fichas del jugador i
-		li $t2 7		# Iterador en el ciclo
 		
+		lw $t1 ($a1) # Obtengo la direccion del arreglo
+
+
+		# Obtengo la direccion del arreglo de fichas del jugador i
+		li $t2 7	# Iterador en el ciclo
+		li $t9 1	# Iterador para el numero de opciones del jugador
+		
+		move $t3 $a0 # Muevo el el numero correspondiente al jugador actual para imprimir
+		
+		imprimir_t(mensaje)
+		imprimir_i($t3)
+		imprimir_t(mensajeParaElJugador)
+		imprimir_t(saltoDeLinea)
 
 		loopMostrarFicha:
+		
+			beq $t1 0 saltar
 
-			sw $t3 ($a1)
+			lw $t3 ($t1) # Obtengo la direccion de la caja que contiene la ficha
+			lw $t4 ($t3) # Obtengo un valor de la ficha
+			lw $t5 4($t3)  # Obtengo un valor de la ficha
 
-			#lw $t3 ($t1)
-			lw $t4 4($a1)
-
-
+			imprimir_t(Opcion)
+			imprimir_i($t9)
+			imprimir_t(dosPuntos)
 			imprimir_t(parentesisAbre)
-
-			li $v0 1
-			move $a0 $t3
-			syscall
-
-			imprimir_t(punto)
 
 			li $v0 1
 			move $a0 $t4
 			syscall
 
+			imprimir_t(punto)
+
+			li $v0 1
+			move $a0 $t5
+			syscall
+
 			imprimir_t(parentesisCierra)
+			imprimir_t(saltoDeLinea)
 
-
-			addi $a1 $a1 4
-			addi $t2 $t2 -1
-			bnez $t2 loopMostrarFicha
-			beqz $t2 regresarMain
+			saltar:
+				addi $t1 $t1 4
+				addi $t9 $t9 1
+				addi $t2 $t2 -1
+				bnez $t2 loopMostrarFicha
+				beqz $t2 regresarMain
 
 		regresarMain:
 			jr $ra
 
-
-
-
-
-
-
-
-
-
-
-
-		#li $t8, 0 # Para moverse en el arreglo fichas [0..27]
 
 
 #------------------------------------------------------#	
