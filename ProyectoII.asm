@@ -154,7 +154,7 @@ loopPrincipal:
 			li $s1 0
 			sw $s1 nuevoJuego  # NuevoJuego=False
 			jal CrearClaseTablero
-			sw $v0 tablero
+			sw $v0 tablero     # tablero almacena la cabecera del Tablero 
 			jal CambiarTurno
 			move $s7 $v0
 		
@@ -164,14 +164,23 @@ loopPrincipal:
 			jal mostrarFichas
 			move $a0 $v0	# $a0 es el argumento de entrada de la funcion RecibirOpcionJugador
 			move $a1 $v1   # $a1 es el numero de fichas que tiene el jugador actual
+
 			jal RecibirOpcionJugador
 			
-			jal VerificarJugada
+			# Insertamos manualmente 1 ficha al tablero para verificar
+			# que se inserte e imprima correctamente
+
+			lw $s0, tablero
+			move $a0, $s0
+			li $s1,1
+			sw $s1, 4($s0)
+			lw $s0, ($s0)
+			sw $v0, ($s0)
 			
-			jal ActualizarTablero
-			
-			#jal ImprimirTablero
-	
+
+			#jal VerificarJugada			
+			#jal ActualizarTablero			
+			jal imprimirTablero
 
 		li 		$v0, 10
 				syscall	
@@ -648,32 +657,32 @@ RepartirFichas:
 		
 CrearClaseTablero:
 
-	# 4 bytes que "apuntan" al primer elemento
-	# 4 bytes que almacenan el numero de elementos que tiene la lista
-	# 4 bytes que "apuntan" al ultimo elemento de la lista
+	# Estructura de la "Cabecera" del tablero:
+	# 	- 4 bytes que "apuntan" al primer elemento
+	# 	- 4 bytes que almacenan el numero de elementos que tiene la lista
+	# 	- 4 bytes que "apuntan" al ultimo elemento de la lista
 	
 	reservarEspacio(12) # Cabecera del tablero
 				
-	move $t1 $v0
+	move 	$t1 $v0      # $t1 contiene la cabecera 
 		
-	#sw $zero ($v0) # Primer elemento del tablero
-	li $a0 0
-	sw $a0 4($v0) # Numero de elementos del tablero
-	sw $zero 8($v0) # Primer elemento del tablero
+	sw		$zero ($v0)   # Primer elemento del tablero
+	sw		$zero, 4($v0) # Numero de elementos del tablero
+	sw		$zero, 8($v0) # Primer elemento del tablero
 	
-	reservarEspacio(224)
+	reservarEspacio(336)
 	
-	sw $v0 ($t1)
-	sw $v0 4($t1)
+	# Se inicializan las direcciones del primer y ultimo elemento del tablero
+	sw		$v0 ($t1)     
+	sw		$v0 8($t1)
 	
-	move $t1 $v0
+	# Se mueve a $v0 (valor de retorno) la cabecera creada
+	move		$v0 $t1
 	
 	jr $ra
 
-
-
-
-#------------------------------------------------------#	
+#------------------------------------------------------#
+	
 
 CambiarTurno:
 
@@ -835,7 +844,128 @@ RecibirOpcionJugador:
 	 	lw $t3 4($v0)
 	 	jr $ra
 
-#------------------------------------------------------#	
+#------------------------------------------------------#
+
+actualizarTablero:
+	#
+	# Descripcion de la funcion:
+	#	Actualiza el tablero luego de que el jugador realice un movimiento valido
+	# Planificador de registros:
+	#  	Registros de entrada:
+	#		- $a0 : Cabecera del tablero 
+	#		- $a1 : Direccion de la ficha a insertar al tablero 
+	# 		- $a2 : Indica si la ficha debe voltearse al momento de ser insertada
+	#		- $a3 : Indica si la ficha debe insertarse a la izquierda o a la derecha 		
+	#  	Registros de salida: Ninguno
+	#
+	
+	# puedo usar los t's que no son responsabilidad del "llamado"
+
+	beq $a2,1,voltear
+	bne $a2,1,noVoltear
+
+	voltear:
+		#lw $a1,($a1)
+		lw $t1, ($a1)  	
+		lw $t0, 4($a1)      
+	
+	noVoltear:
+		#lw $a1,($a1)
+		lw $t0, ($a1)  	
+		lw $t1, 4($a1)      
+
+	# Se inserta la nueva ficha al final del arreglo del tablero:
+
+	# $a0 tiene la cabecera
+
+	lw $t2, ($a0)  # $t2 contiene el apuntador al primer elemento del arreglo
+	lw $t3, 4($a0) # $t3 contiene el numero de elementos del arreglo 
+	lw $t4, 8($a0) # $t4 contiene el apuntador al ultimo elemento insertado 
+		
+	# Se calcula el desplazamiento para insertar los nuevos elementos 
+	# Arreglo[i] = Arreglo + i*TamanoTipo(12)
+	
+	addi $t3,$t3,-1 # Se determina la posicion i del arreglo a insertar
+	li $t5,12
+	mult $t3,$t5
+	mflo $t5
+	add $t3,$t3,$t5 # $t3 tiene ahora el desplazamiento
+	add $t2,$t2,$t3 
+	sw $t0, ($t2)
+	sw $t0, 4($t2)	
+
+	beq $a3,0,insertarIzquierda
+	bne $a3,0,insertarDerecha
+	
+
+	insertarIzquierda:
+		# Se actualizan los apuntadores:
+
+		sw $a0,8($t2)     # Se actualiza el atributo "siguiente" del elemento insertado
+		sw $t2,($a0)	   # Se actualiza el primer elemento del tablero
+
+	insertarDerecha:
+		# Se actualizan los apuntadores:
+	
+		sw $t2,8($t4) # Se actualiza el atributo "siguiente" del penultimo elemento
+		sw $t2,8($a0) # Se actualiza el ultimo elemento insertado a la lista		
+
+	jr $ra
+
+
+#------------------------------------------------------#
+
+
+imprimirTablero:
+	#
+	# Descripcion de la funcion:
+	#	Imprime por consola el estado actual del tablero de juego
+	# Planificador de registros:
+	#  	Registros de entrada:
+	#		* $a0: Contiene la cabecera del tablero
+	#  	Registros de salida: Ninguno
+	#
+
+	lw $t0, ($a0)  # $t0 contiene la direccion del primer elemento del tablero
+	lw $t1, 4($a0) # $t1 contiene el numero de elementos del tablero 
+	lw $t2, 8($a0) # $t2 contiene la direccion del ultimo elemento del tablero
+	
+	imprimeFichasTablero:
+
+			lw $t3, ($t0)
+
+			imprimir_t(parentesisAbre)
+
+			# Se imprime el primer elemento de la ficha: 
+			li $v0 1
+			move $a0, $t3
+			syscall
+
+			imprimir_t(punto)
+
+			addi $t3,$t3,4
+
+			# Se imprime el segundo elemento de la ficha:
+			li $v0 1
+			move $a0 $t3
+			syscall
+
+			imprimir_t(parentesisCierra)
+
+			lw $t0, 8($t3)
+			addi $t1,$t1,-1
+			bnez $t1,imprimeFichasTablero
+
+	imprimir_t(saltoDeLinea)
+
+	jr $ra
+
+#------------------------------------------------------#
+
+
+
+
+	
 
 RevisarPuntos:
 
