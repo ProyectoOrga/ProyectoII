@@ -17,10 +17,16 @@ tablero:			.word     0
 rondas: 			.word	0
 nuevoJuego:		.word     0
 fichas:			.word     0
+tieneCochina:		.word 	0
+turnoRonda:		.word	0  
+turnoActual:		.word	0  
 piedrasArchivo:	.space  169
 nombre:			.space   20
 letra:			.word     0
-nombreArchivo:		.asciiz "/home/prmm95/Desktop/CI3815/ProyectoII-Github/PIEDRAS"
+nombreArchivo:		.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
+parentesisAbre:	.asciiz "("
+parentesisCierra:	.asciiz ")"
+punto:			.asciiz "."
 saltoDeLinea:		.asciiz "\n"
 mensaje: 			.asciiz "Jugador "
 texto:			.asciiz " Introduzca su nombre: "
@@ -32,7 +38,6 @@ texto:			.asciiz " Introduzca su nombre: "
 ########################################################
 #                DECLARACION DE MACROS                 #                      
 ########################################################
-
 
 .macro imprimir_t (%texto) #Macro para imprimir un texto
 	li 		$v0, 4
@@ -47,7 +52,6 @@ texto:			.asciiz " Introduzca su nombre: "
 .end_macro
 
 .macro reservarEspacio(%espacio) # Macro para reservar espacio de memoria
-
 	li		$v0  9
 	li		$a0  %espacio
 	syscall
@@ -76,7 +80,9 @@ main:
 		# Se reparten las fichas a los jugadores:
 		lw 		$a0, jugadores
 		lw 		$a1, fichas  		
-		jal 		RepartirFichas 	
+		jal 		RepartirFichas 
+
+		sw $v0,tieneCochina	
 
 		# Se crea la clase tablero
 		jal 		CrearClaseTablero
@@ -84,67 +90,78 @@ main:
 
 
 
+		li 		$a0 1
+		sw		$a0 rondas 		 # NumeroRondas = 1
+		sw		$a0 nuevoJuego    # NuevoJuego = True
+
+
+		# Se inicializan las variables de los turnos del juego
+
+		lw 		$s0,tieneCochina
+		sw 		$s0,turnoRonda
+		sw 		$s0,turnoActual		
+
 #########################################################
 # Cuando encontremos la cochina guardar en una variable 
 #  el numero del jugador que le toca sacar en la proxima 
 #  ronda
 #########################################################
 
-li $a0 1
-sw $a0 rondas  # NumeroRondas=1
-sw $a0 nuevoJuego #NuevoJuego=True
 
 
 loopPrincipal:
 
 	
-	# Se verifica si los puntos del grupo 1 son mayores o iguales que 100
-	lw $s1 jugadores
-	lw $s2 4($s1)
-	li $s3 100
-	bge $s2 $s3 RevisarPuntos
-	blt $s2 $s3 continuar
+		# Se verifica si los puntos del grupo 1 son mayores o iguales que 100
+		lw 		$s1 jugadores
+		lw 		$s2 4($s1)
+		li 		$s3 100
+		bge 		$s2 $s3 RevisarPuntos
+		blt 		$s2 $s3 continuar
 
-	continuar:
-		# Se verifica si los puntos del grupo 2 son mayores o iguales que 100
-		lw $s2 16($s1)
-		bge $s2 $s3 RevisarPuntos
-		blt $s2 $s3 VerificarRondaNueva
+		continuar:
+			# Se verifica si los puntos del grupo 2 son mayores o iguales que 100
+			lw 		$s2 16($s1)
+			bge 		$s2 $s3 RevisarPuntos
+			blt		$s2 $s3 VerificarRondaNueva
 		
-	VerificarRondaNueva:
+		VerificarRondaNueva:
 	
-		# Se verifica si nuevoJuego=True
-		lw $s1 rondas
-		lw $s2 nuevoJuego
-		li $s3 1
-		beq  $s2 $s3 VerificarNumeroRondas
-		bne  $s2 $s3 NuevaPartida
+			# Se verifica si nuevoJuego = True
+			lw 		$s1 rondas
+			lw 		$s2 nuevoJuego
+			li 		$s3 1
+			beq  	$s2 $s3 VerificarNumeroRondas
+			bne  	$s2 $s3 continuarJuego
 		
-	VerificarNumeroRondas:
-		# Se verifica si numeroRondas!=1
-		bne $s1 $s3 NuevaPartida
-		beq $s1 $s3 continuarJuego
+		VerificarNumeroRondas:
+			# Se verifica si numeroRondas!=1
+			bne 		$s1 $s3 NuevaPartida
+			beq 		$s1 $s3 continuarJuego
 		
 		
-	NuevaPartida:
+		NuevaPartida:
 	
-		# Se empieza una nueva partida
+			# Se empieza una nueva partida
 	
-		# mezclar(piedras)
-		# repartirFichas()
+			# mezclar(piedras)
+			# repartirFichas()
+			
+			li $s1 0
+			sw $s1 nuevoJuego  # NuevoJuego=False
+			jal CrearClaseTablero
+			sw $v0 tablero
+			jal CambiarTurno
+			move $s7 $v0
 		
-		li $s1 0
-		sw $s1 nuevoJuego  # NuevoJuego=False
-		jal CrearClaseTablero
-		sw $v0 tablero
-		jal CambiarTurno
-		move $s7 $v0
-		
-	continuarJuego:
+		continuarJuego:
+			sw $a0 turnoActual
+			sw $a1 jugadores
+			jal mostrarFichas
 	
 
-li 		$v0, 10
-		syscall	
+		li 		$v0, 10
+				syscall	
 
 ########################################################
 #               DECLARACION DE FUNCIONES               #                      
@@ -215,9 +232,7 @@ extraerPiedras:
 		move $t5 $v0
 					
 		# Se reserva el espacio para la primera ficha
-		li $a0,8
-		li $v0,9
-		syscall
+		reservarEspacio(8)
 
 		li $t2,9
 		sw $t2,($v0)
@@ -377,7 +392,7 @@ AgregarSimbolo:
 	esNumero:
 		
 		addi $t2,$t2,-48
-		imprimir_i($t2)
+		#imprimir_i($t2)
 
 		lw $t4 ($a1)
 		move $t7,$t4
@@ -420,14 +435,11 @@ CrearClaseJugador:
 	#    = numeroJugador*(4*3)+2*(4)
 	#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)
 
-
-	li $a0 64
-	li $v0 9
-	syscall
+	reservarEspacio(64)
 	move $v1,$v0
 	
 	# Se inicializan los puntos en 0
-	li $a0 99
+	li $a0 0
 	sw $a0 4($v0)
 	sw $a0 16($v0)
 	sw $a0 28($v0)
@@ -587,6 +599,22 @@ RepartirFichas:
 						# [[],[],[],,,,,[]]
 
 						lw $t8,($a1)
+
+						lw $t6 ($t8)
+
+						beq $t6,6,verificarEsCochina
+						bne $t6,6,noEsCochina
+
+						verificarEsCochina:
+							lw $t6, 4($t8)
+							beq $t6,6 siEsCochina
+							bne $t6,6 noEsCochina
+
+							siEsCochina:
+								move $v0, $t1
+
+						noEsCochina:
+
 						sw $t8,($t9)
 
 						addi $t9,$t9,4
@@ -599,16 +627,9 @@ RepartirFichas:
 				addi		$t1,$t1,1
 				bne		$t1,4,cicloRepartir
 			
-
 		jr $ra
 
-
-
-
-
-
-
-
+#------------------------------------------------------#	
 		
 CrearClaseTablero:
 
@@ -616,9 +637,7 @@ CrearClaseTablero:
 	# 4 bytes que almacenan el numero de elementos que tiene la lista
 	# 4 bytes que "apuntan" al ultimo elemento de la lista
 	
-	li $a0 12
-	li $v0 9
-	syscall
+	reservarEspacio(12)
 		
 	sw $zero ($v0)
 	li $a0 0
@@ -628,20 +647,24 @@ CrearClaseTablero:
 	jr $ra
 
 
+
+
+#------------------------------------------------------#	
+
 CambiarTurno:
 
 
 	#  Registros de entrada:
-	#	* $t1: Turno a cambiar
+	#	* $a0: Turno a cambiar
 	
 	# Registros salida:
 	#	*$v0  : Turno actual
 	
 	
-	li $t2 4
+	li $t2 3
 	
-	beq $t1 $t2 cambiar
-	bne $t1 $t2 cambiar2
+	beq $a0 $t2 cambiar
+	bne $a0 $t2 cambiar2
 	cambiar:
 		li $v0 1
 		jr $ra
@@ -651,11 +674,89 @@ CambiarTurno:
 		addi $v0 $t1 1
 		jr $ra
 
+#------------------------------------------------------#
+mostrarFichas:
+
+		# Registros de entrada:
+		#
+		#	* $a0: Turno actual
+		#	* $a1: Direccion de la "clase" jugadores
+		#
+
+		li $t2,4  # Tamano palabra
+		li $t3,2  # Columna que nos interesa
+		li $t8,3  # Numero columna
+
+		mult $t2,$t8
+		mflo $t4 # $t4 = TamanoPalabra*NumeroColumna
+
+		mult $t3,$t2
+		mflo $t5 # $t5 = Columna que nos interesa [2]*TamanoPalabra
+
+		mult $a0 $t4  # i*( TamanoPalabra*NumeroColumna)
+		mflo $t4
+
+		add $t4 $t4 $t5  # Dezamiento
+		add $a1 $a1 $t4 #Realizo el dsplazamiento
+
+
+		  # Obtengo la direccion del arreglo de fichas del jugador i
+		li $t2 7		# Iterador en el ciclo
+		
+
+		loopMostrarFicha:
+
+			sw $t3 ($a1)
+
+			#lw $t3 ($t1)
+			lw $t4 4($a1)
+
+
+			imprimir_t(parentesisAbre)
+
+			li $v0 1
+			move $a0 $t3
+			syscall
+
+			imprimir_t(punto)
+
+			li $v0 1
+			move $a0 $t4
+			syscall
+
+			imprimir_t(parentesisCierra)
+
+
+			addi $a1 $a1 4
+			addi $t2 $t2 -1
+			bnez $t2 loopMostrarFicha
+			beqz $t2 regresarMain
+
+		regresarMain:
+			jr $ra
+
+
+
+
+
+
+
+
+
+
+
+
+		#li $t8, 0 # Para moverse en el arreglo fichas [0..27]
+
+
+#------------------------------------------------------#	
 
 RevisarPuntos:
 
 	li $v0 1
 	jr $ra
+
+#------------------------------------------------------#
 
 fin:
 
