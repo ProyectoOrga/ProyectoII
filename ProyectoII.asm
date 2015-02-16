@@ -12,29 +12,29 @@
 
 		.data
 
-jugadores:		.word     0
-tablero:		.word     0
-rondas: 		.word	0
-nuevoJuego:		.word     0
-fichas:			.word     0
-tieneCochina:		.word 	0
-turnoRonda:		.word	0  
-turnoActual:		.word	0  
+jugadores:			.word     0
+tablero:				.word     0
+rondas: 				.word	0
+nuevoJuego:			.word     0
+fichas:				.word     0
+tieneCochina:			.word 	0
+turnoRonda:			.word	0  
+turnoActual:			.word	0  
 piedrasArchivo:		.space  169
-nombre:			.space   20
-letra:			.word     0
-nombreArchivo:		.asciiz "/home/alejandra/Dropbox/Organizacion del computador/Proyectos/Proyecto IIGIT/PIEDRAS"
+nombre:				.space   20
+letra:				.word     0
+nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
 parentesisAbre:		.asciiz "("
-parentesisCierra:	.asciiz ")"
-punto:			.asciiz "."
-dosPuntos:		.asciiz " :  "
-saltoDeLinea:		.asciiz "\n"
-mensaje: 		.asciiz "Jugador "
-Introducir:		.asciiz "Introduzca su opcion de juego:  "
-Invalido:		.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
-texto:			.asciiz " introduzca su nombre: "
+parentesisCierra:		.asciiz ")"
+punto:				.asciiz "."
+dosPuntos:			.asciiz " :  "
+saltoDeLinea:			.asciiz "\n"
+mensaje: 				.asciiz "Jugador "
+Introducir:			.asciiz "Introduzca su opcion de juego:  "
+Invalido:				.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
+texto:				.asciiz " introduzca su nombre: "
 mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
-Opcion: 	 	.asciiz " Opcion "
+Opcion: 	 			.asciiz " Opcion "
 
 #nombre:		
 
@@ -97,12 +97,9 @@ main:
 		jal 		CrearClaseTablero
 		sw 		$v0 tablero
 
-
-
 		li 		$a0 1
 		sw		$a0 rondas 	# NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
-
 
 		# Se inicializan las variables de los turnos del juego
 
@@ -115,8 +112,6 @@ main:
 #  el numero del jugador que le toca sacar en la proxima 
 #  ronda
 #########################################################
-
-
 
 loopPrincipal:
 
@@ -168,7 +163,7 @@ loopPrincipal:
 			lw $a1 jugadores
 			jal mostrarFichas
 			move $a0 $v0	# $a0 es el argumento de entrada de la funcion RecibirOpcionJugador
-			move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
+			move $a1 $v1   # $a1 es el numero de fichas que tiene el jugador actual
 			jal RecibirOpcionJugador
 			
 			#jal VerificarJugada
@@ -830,9 +825,6 @@ RecibirOpcionJugador:
 	 	lw $t2 ($v0)
 	 	lw $t3 4($v0)
 	 	jr $ra
-
-
-
 
 #------------------------------------------------------#	
 
