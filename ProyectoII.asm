@@ -1,4 +1,4 @@
- #
+#
 # ProyectoII.asm
 #
 # Descripcion:
@@ -19,12 +19,11 @@ nuevoJuego:		.word     0
 fichas:			.word     0
 piedrasArchivo:	.space  169
 nombre:			.space   20
-
 letra:			.word     0
 nombreArchivo:		.asciiz "/home/prmm95/Desktop/CI3815/ProyectoII-Github/PIEDRAS"
 saltoDeLinea:		.asciiz "\n"
 mensaje: 			.asciiz "Jugador "
-texto:			.asciiz " introduzca su nombre :   "
+texto:			.asciiz " Introduzca su nombre: "
 #nombre:		
 
 
@@ -63,20 +62,25 @@ main:
 		jal 		leerArchivoPiedras # Se retorna en $v0 la direccion de los datos leidos
 		move 	$a0,$v0
 		jal 		extraerPiedras
-		j fin
+		
+		# Se crea la clase jugador
+		jal 		CrearClaseJugador 
+		sw 		$v0 jugadores
+		
+		# Es un  argumento, hay que cambiar $t7 por $a0 
+		move 	$t7 $v0  # Se estaria trabajando la estructura de datos jugador como algo global (no se si eso es bueno)
 
-# Se crea la clase jugador
-jal CrearClaseJugador 
-sw $v0 jugadores
+		# Pedir nombre a Jugadores
+		jal 		PedirYalmacenarNombreJugadores
 
-move $t7 $v0  # Se estaria trabajando la estructura de datos jugador como algo global (no se si eso es bueno)
+		# Se reparten las fichas a los jugadores:
+		lw 		$a0, jugadores
+		lw 		$a1, fichas  		
+		jal 		RepartirFichas 	
 
-# Pedir nombre a Jugadores
-jal PedirYalmacenarNombreJugadores
-
-# Se crea la clase tablero
-jal CrearClaseTablero
-sw $v0 tablero
+		# Se crea la clase tablero
+		jal 		CrearClaseTablero
+		sw 		$v0 tablero
 
 
 
@@ -191,6 +195,7 @@ errorLectura:
 		li 		$v0, 10
 		syscall	
 	
+#------------------------------------------------------#
 
 extraerPiedras:
 		
@@ -354,6 +359,7 @@ extraerPiedras:
 
 				jr $ra
 
+#------------------------------------------------------#
 
 AgregarSimbolo:
 	# La entrada por ahora esta en $t2 (hay que arreglar las convenciones $a0 )
@@ -405,51 +411,111 @@ AgregarSimbolo:
 		move $v0,$a1	
 		jr $ra
 
+#------------------------------------------------------#
+
 CrearClaseJugador:
 	
+	#
+	# [[Nombre[4],PuntosGrupo[4],Fichas[4]],[].[].[]
+	#    = numeroJugador*(4*3)+2*(4)
+	#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)
+
+
 	li $a0 64
 	li $v0 9
 	syscall
+	move $v1,$v0
 	
 	# Se inicializan los puntos en 0
-	li $a0 0
+	li $a0 99
 	sw $a0 4($v0)
 	sw $a0 16($v0)
 	sw $a0 28($v0)
 	sw $a0 40($v0)
 	sw $a0 44($v0)
+
+
+	move $t0, $v0
+
+	# Se crea la lista de fichas para cada jugador:
+
+	li $t1,0
+	li $t2,4
+	li $t3,2
+	li $t8,3
+
+	mult $t2,$t8
+	mflo $t4 # $t4 = TamanoPalabra*NumeroColumna
+
+	mult $t3,$t2
+	mflo $t5 # $t5 = Columna que nos interesa [2]*TamanoPalabra
 	
+	crearLista:
+		mult $t1,$t4
+		mflo $t6
+		add $t6,$t6,$t5 
+
+		add $t0,$t0,$t6
+		
+		reservarEspacio(28)
+		sw $v0,($t0)
+
+		sub $t0,$t0,$t6	
+		addi $t1,$t1,1
+		bne $t1,$t2,crearLista
+
+	move $v0,$v1
 	jr $ra
 	
-	
-PedirYalmacenarNombreJugadores:
+#------------------------------------------------------#	
 
-	#
-	#  Registro de entrada:
-	#	* $t7: Variable que almacenara la direccion de la clase jugador
-	#
-	#  Registro de salida:
-	#	Ninguno
+PedirYalmacenarNombreJugadores:
+	# Descripcion de la funcion:
+	#	Pide por consola los nombres de los jugadores y los almacena
+	#  en el arreglo correspondiente.
+	# Planificador de registros: 
+	#	Registros de entrada:
+	#		* $t7: Variable que almacenara la direccion de la clase jugador
+	#	Registro de salida:
+	#		Ninguno
+
+	# [[Nombre[4],Puntos[4],Fichas[4],PuntosGrupo[4]],[].[].[]
+		#    = numeroJugador*(4*4)+2*(4)
+		#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(0)*TamanoPalabra)
 	
-	
-	
-	li $t1 4
-	li $t4 12
+	###################################################
+
+	lw $t7,jugadores
+
+	li $t1 0
+	li $t9 4
+	li $t3,0
+	li $t8,3
+
+	mult $t9,$t8
+	mflo $t4 # $t4 = TamanoPalabra*NumeroColumna
+
+	mult $t3,$t9
+	mflo $t5 # $t5 = Columna que nos interesa [2]*TamanoPalabra
+
 	loop:
 		imprimir_t (mensaje)
 		imprimir_i ($t1)
 		imprimir_t (texto)
 		
+		reservarEspacio(20)
+		move $t0,$v0
 
 		li $v0 8
-		la $a0, nombre
+		move $a0, $t0
 		li $a1 20
 		syscall
 		
-		la $t2 nombre # Almaceno el nombre del jugador 
-		addi $t3 $t1 -1 # Multiplico 28(i-1)
-		mult $t3 $t4
+		move $t2, $a0 # Almaceno el nombre del jugador
+
+		mult $t1 $t4
 		mflo $t3
+		add $t3 $t3 $t5 
 		
 		add $t6 $t7 $t3 # Me muevo hasta la posicion en donde esta 
 		sw $t2 ($t6)	# Se almacena la direccion del nombre del jugador
@@ -465,10 +531,84 @@ PedirYalmacenarNombreJugadores:
 		#la $a0 saltoDeLinea
 		#syscall
 		
-		addi $t1 $t1 -1
-		bnez $t1 loop	
+		addi $t1 $t1 1
+		bne $t1 4 loop	
 	jr $ra	
+
+#------------------------------------------------------#	
+
+RepartirFichas:
+		# Descripcion de la funcion:
+		#	Reparte las fichas a los jugadores
+		# Planificador de registros:
+		#  	Registros de entrada:
+		#		* $a0: Almacena el arreglo de Jugadores
+		#    	* $a1: Almacena el arreglo de las fichas 
+		#  	Registros de salida:
+		#
+
+		# [[Nombre[4],Puntos[4],Fichas[4],PuntosGrupo[4]],[].[].[]
+		#    = numeroJugador*(4*4)+2*(4)
+		#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)
+		
+
+		li $t1,0
+		li $t2,4
+		li $t3,2
+		li $t8,3
+
+		mult $t2,$t8
+		mflo $t4 # $t4 = TamanoPalabra*NumeroColumna
+
+		mult $t3,$t2
+		mflo $t5 # $t5 = Columna que nos interesa [2]*TamanoPalabra
+
+		#li $t8, 0 # Para moverse en el arreglo fichas [0..27]
 	
+
+		cicloRepartir:
+
+				mult $t1,$t4
+				mflo $t6
+				add $t6,$t6,$t5 
+	
+				add $t0,$t0,$t6 # Se obtiene el desplazamiento
+				add $a0,$a0,$t6	
+
+				lw $t9,($a0)			
+
+				sub $a0,$a0,$t6	
+
+				li	$t2,0  # Contador de f ---->  [[],[],...,[]]
+					
+				cicloFichas:
+						# [[n],[p],[f]]						
+						# 
+						# [[],[],[],,,,,[]]
+
+						lw $t8,($a1)
+						sw $t8,($t9)
+
+						addi $t9,$t9,4
+						addi		$a1,$a1,4 # F [0..27]
+						addi		$t2,$t2,1
+						bne 		$t2,7,cicloFichas
+				
+		
+
+				addi		$t1,$t1,-1
+				bnez		$t1,cicloRepartir
+			
+
+		jr $ra
+
+
+
+
+
+
+
+
 		
 CrearClaseTablero:
 
