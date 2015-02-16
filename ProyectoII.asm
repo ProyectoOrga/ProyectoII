@@ -12,29 +12,30 @@
 
 		.data
 
-jugadores:			.word     0
-tablero:				.word     0
-rondas: 				.word	0
-nuevoJuego:			.word     0
-fichas:				.word     0
-tieneCochina:			.word 	0
-turnoRonda:			.word	0  
-turnoActual:			.word	0  
+jugadores:		.word     0
+tablero:		.word     0
+rondas: 		.word	0
+nuevoJuego:		.word     0
+fichas:			.word     0
+tieneCochina:		.word 	0
+turnoRonda:		.word	0  
+turnoActual:		.word	0  
 piedrasArchivo:		.space  169
-nombre:				.space   20
-letra:				.word     0
-nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
+nombre:			.space   20
+letra:			.word     0
+nombreArchivo:		.asciiz "/home/alejandra/Dropbox/Organizacion del computador/Proyectos/Proyecto IIGIT/PIEDRAS"
 parentesisAbre:		.asciiz "("
-parentesisCierra:		.asciiz ")"
-punto:				.asciiz "."
-dosPuntos:			.asciiz " :  "
-saltoDeLinea:			.asciiz "\n"
-mensaje: 				.asciiz "Jugador "
-Introducir:			.asciiz "Introduzca su opcion de juego:  "
-Invalido:				.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
-texto:				.asciiz " introduzca su nombre: "
+parentesisCierra:	.asciiz ")"
+punto:			.asciiz "."
+dosPuntos:		.asciiz " :  "
+saltoDeLinea:		.asciiz "\n"
+mensaje: 		.asciiz "Jugador "
+Introducir:		.asciiz "Introduzca su opcion de juego:  "
+Invalido:		.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
+texto:			.asciiz " introduzca su nombre: "
 mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
-Opcion: 	 			.asciiz " Opcion "
+JugadaInvalida:		.asciiz "La jugada es invalida. "
+Opcion: 	 	.asciiz " Opcion "
 
 #nombre:		
 
@@ -97,9 +98,12 @@ main:
 		jal 		CrearClaseTablero
 		sw 		$v0 tablero
 
+
+
 		li 		$a0 1
 		sw		$a0 rondas 	# NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
+
 
 		# Se inicializan las variables de los turnos del juego
 
@@ -112,6 +116,8 @@ main:
 #  el numero del jugador que le toca sacar en la proxima 
 #  ronda
 #########################################################
+
+
 
 loopPrincipal:
 
@@ -162,13 +168,47 @@ loopPrincipal:
 			lw $a0 turnoActual
 			lw $a1 jugadores
 			jal mostrarFichas
-			move $a0 $v0	# $a0 es el argumento de entrada de la funcion RecibirOpcionJugador
-			move $a1 $v1   # $a1 es el numero de fichas que tiene el jugador actual
-			jal RecibirOpcionJugador
 			
-			jal VerificarJugada
+			VericacionJugada:
+				move $a0 $v0 # $a0 es la direccion del arreglo de fichas del jugador
+				move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
+				
+				#Prologo
+				move $fp, $sp 
+				addi $sp $sp -4
+				sw $fp, 4($sp) 
+				addi $sp, $sp, -4
+				sw $ra, 4($sp)
+				addi $sp $sp -4
+				sw $v0, 4($sp)
+				addi $sp $sp -4
+				sw $v1, 4($sp) 
+				
+				jal RecibirOpcionJugador
 			
-			jal ActualizarTablero
+				move $a0 $v0 # $a0 es el argumento de entrada de la funcion (direccion de la ficha seleccionada por el jugador)
+				lw $a1 tablero # Direccion del tablero
+				lw $a2 rondas # Numero de rondas
+				
+				jal VerificarJugada
+				
+				move $s1 $v0 # Registro de salida de la funcion
+				
+				 #Epilogo
+				lw $v1 4($sp)
+				addi $sp, $sp, 4
+				lw $v0 4($sp)
+				addi $sp, $sp, 4
+				lw $ra, 4($sp)
+				addi $sp, $sp, 4
+				lw $fp, 4($sp)
+				addi $sp, $sp, 4
+				
+				lw $s2 ($s1)
+				
+				beqz $s2 VericacionJugada # $s2 es 1 si la jugada es valida y 0 si no lo es
+			
+			#jal ActualizarTablero
 			
 			#jal ImprimirTablero
 	
@@ -659,14 +699,17 @@ CrearClaseTablero:
 	#sw $zero ($v0) # Primer elemento del tablero
 	li $a0 0
 	sw $a0 4($v0) # Numero de elementos del tablero
-	sw $zero 8($v0) # Primer elemento del tablero
+	
 	
 	reservarEspacio(224)
+	li $t2 2
+	sw $t2 ($v0) # Prueba (Guardo 2,2)
+	sw $t2 4($v0)
 	
-	sw $v0 ($t1)
-	sw $v0 4($t1)
+	sw $v0 ($t1) # Almaceno el primero elemento
+	sw $v0 8($t1) # Almaceno el ultimo elemento
 	
-	move $t1 $v0
+	move $v0 $t1
 	
 	jr $ra
 
@@ -794,7 +837,7 @@ RecibirOpcionJugador:
 	#	* $v0 : La direccion de la ficha que el jugador va a jugar
 	#
 	move $t4 $a0
-	li $t1 4
+	#li $t1 4
 
 	imprimir_t(Introducir)
 	
@@ -819,14 +862,15 @@ RecibirOpcionJugador:
 		#mflo $t1
 	
 		lw $t5 ($t4)
+		addi $t4 $t4 4
 		
 		beqz $t5 ClacularDireccion
 		
 		beqz $v0 regreso
 		addi $v0 $v0 -1
-		add $t4 $t4 $t1
 		lw $t2 ($t5)
 		lw $t3 4($t0)
+		#addi $t4 $t4 4
 		bnez $v0 ClacularDireccion 
 	
 	regreso:	
@@ -835,6 +879,113 @@ RecibirOpcionJugador:
 	 	lw $t3 4($v0)
 	 	jr $ra
 
+
+
+
+#------------------------------------------------------#
+VerificarJugada:
+
+	# Registros de entrada:
+	#
+	#	* $a0: Direccion de memoria de la ficha que selecciono el jugador
+	#	* $a1: Direccion de memoria de la clase tablero
+	#	* $a2 : Numero de rondas de la jugada
+	#
+	# Registros de salida:
+	#	* $v0 : En $vo se almacen una estructura de datos que posee tres argumentos.
+	#       * El primer elemento es 1 si la ficha es una jugada correcta y 0 si la jugada es incorrecta
+	#	* El segundo elemento es 1 si la ficha se debe voltear y 0 si no lo debe hacer
+	#	* El tercer elemento es 0 si la ficha se agregara por la izquierda y 1 
+	
+	move $t1 $a0
+	move $t2 $a1
+	move $t3 $a2
+	
+	beq $t3 1 SeDebeJugarLaCochina  # Si estamos en la primera ronda el jugador debe sacar la cochina
+	bne $t3 1 RevisarJugada
+	SeDebeJugarLaCochina:
+	
+		lw $t4 ($t1)
+		lw $t5 4($t1)
+		
+		beq $t4 6 VerificarFicha
+		bne $t4 6 NoEsCochina
+		
+		VerificarFicha:
+		
+			beq  $t5 6 EsCochina
+			bne $t5  6 NoEsCochina
+			
+		EsCochina:
+			li $v0 1
+			li $v1 0
+			li $t9 0
+			b saltarMain
+	
+		NoEsCochina:
+			imprimir_t(JugadaInvalida)
+			li $v0 0
+			li $v1 0
+			li $t9 0
+			b saltarMain
+			
+	RevisarJugada:
+	
+		lw $t4 ($t1) # Valor de la ficha del jugador
+		lw $t5 4($t1) # Valor de la ficha del jugador
+		
+		lw $t6 ($t2) # Direccion del primer elemento del tablero
+		lw $t7 8($t2)# Direccion del ultimo elemento del tablero
+		
+		# Elemento que nos importa de la ficha del extremo izquierdo del tablero
+		lw $t6 ($t6) 
+		
+		# Elemento que nos importa de la ficha del extremo derecho del tablero
+		lw $t7 4($t7)
+		
+		beq $t5 $t6 izquierda
+		beq $t4 $t7 derecha
+		beq $t4 $t6 izquierdaVoltear
+		beq $t5 $t7 derechaVoltear
+		imprimir_t(JugadaInvalida)
+		li $v0 0
+		b saltarMain
+		
+		izquierda:
+			li $v0 1
+			li $v1 0
+			li $t9 0 # El elemento se agregara a la izquierda
+			b saltarMain
+	
+		derecha:
+			li $v0 1
+			li $v1 0
+			li $t9 1  # El elemento se agregara a la derecha
+			b saltarMain
+	
+		izquierdaVoltear:
+			li $v0 1
+			li $v1 1  # El elemento se volteara
+			li $t9 0  # El elemento se agregara a la izquierda
+			b saltarMain
+	
+		derechaVoltear:
+			li $v0 1
+			li $v1 1  # El elemento se volteara
+			li $t9 1  # El elemento se agregara a la derecha
+			b saltarMain
+		
+	saltarMain:
+	
+		move $t2 $v0
+		reservarEspacio(12)
+		
+		sw $t2 ($v0) # Si la pieza es valida o no
+		sw $v1 4($v0) # Si la pieza se debe voltear o no
+		sw $t9 8($v0) # Si la pieza va a la izquierda o a la derecha
+		
+		jr $ra
+	
 #------------------------------------------------------#	
 
 RevisarPuntos:
