@@ -596,8 +596,8 @@ RepartirFichas:
 				
 		
 
-				addi		$t1,$t1,-1
-				bnez		$t1,cicloRepartir
+				addi		$t1,$t1,1
+				bne		$t1,4,cicloRepartir
 			
 
 		jr $ra
