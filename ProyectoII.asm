@@ -12,19 +12,20 @@
 
 		.data
 
-jugadores:		.word     0
-tablero:		.word     0
-rondas: 		.word	0
-nuevoJuego:		.word     0
-fichas:			.word     0
-tieneCochina:		.word 	0
-turnoRonda:		.word	0  
-turnoActual:		.word	0  
+jugadores:			.word     0
+tablero:				.word     0
+rondas:	 			.word	0
+nuevoJuego:			.word     0
+fichas:				.word     0
+tieneCochina:			.word 	0
+turnoRonda:			.word	0  
+turnoActual:			.word	0  
 piedrasArchivo:		.space  169
-nombre:			.space   20
-letra:			.word     0
-nombreArchivo:		.asciiz "/home/alejandra/Dropbox/Organizacion del computador/Proyectos/Proyecto IIGIT/PIEDRAS"
+nombre:				.space   20
+letra:				.word     0
+nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
 parentesisAbre:		.asciiz "("
+<<<<<<< HEAD
 parentesisCierra:	.asciiz ")"
 punto:			.asciiz "."
 dosPuntos:		.asciiz " :  "
@@ -33,9 +34,17 @@ mensaje: 		.asciiz "Jugador "
 Introducir:		.asciiz "Introduzca su opcion de juego:  "
 Invalido:		.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
 texto:			.asciiz " introduzca su nombre: "
+=======
+parentesisCierra:		.asciiz ")"
+punto:				.asciiz "."
+dosPuntos:			.asciiz " :  "
+saltoDeLinea:			.asciiz "\n"
+mensaje: 				.asciiz "Jugador "
+texto:				.asciiz " Introduzca su nombre: "
+>>>>>>> 44d0158e469deab7d2cb73d0e7787598f4686668
 mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
-Opcion: 	 	.asciiz " Opcion "
-
+Opcion: 	 			.asciiz " Opcion "
+mensajeJuego:			.asciiz " Introduzca el numero correspondiente a la piedra que desea jugar: "
 #nombre:		
 
 
@@ -116,11 +125,8 @@ main:
 #  ronda
 #########################################################
 
-
-
 loopPrincipal:
 
-	
 		# Se verifica si los puntos del grupo 1 son mayores o iguales que 100
 		lw 		$s1 jugadores
 		lw 		$s2 4($s1)
@@ -164,9 +170,12 @@ loopPrincipal:
 			move $s7 $v0
 		
 		continuarJuego:
+		
+			# Muestra las posibles fichas a jugar en el turno actual:
 			lw $a0 turnoActual
 			lw $a1 jugadores
 			jal mostrarFichas
+<<<<<<< HEAD
 			move $a0 $v0	# $a0 es el argumento de entrada de la funcion RecibirOpcionJugador
 			move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
 			jal RecibirOpcionJugador
@@ -177,6 +186,11 @@ loopPrincipal:
 			
 			#jal ImprimirTablero
 	
+=======
+
+			# Recibe como argumento el jugador y el tablero:
+			jal recibeyVerificaSeleccion
+>>>>>>> 44d0158e469deab7d2cb73d0e7787598f4686668
 
 		li 		$v0, 10
 				syscall	
@@ -666,9 +680,6 @@ CrearClaseTablero:
 	
 	jr $ra
 
-
-
-
 #------------------------------------------------------#	
 
 CambiarTurno:
@@ -776,7 +787,9 @@ mostrarFichas:
 			# 	y devolver su direccion en $v0
 			jr $ra
 
+#------------------------------------------------------#
 
+<<<<<<< HEAD
 #------------------------------------------------------#
 RecibirOpcionJugador:
 
@@ -833,8 +846,34 @@ RecibirOpcionJugador:
 
 
 
+=======
+recibeyVerificaSeleccion:
+>>>>>>> 44d0158e469deab7d2cb73d0e7787598f4686668
 
-#------------------------------------------------------#	
+		# Descripcion de la funcion:
+		#	Recibe la opcion de juego del jugador actua
+		# Planificador de registros:
+		#  	Registros de entrada:
+		#		* $a0: 
+		#    	* $a1: 
+		#  	Registros de salida:
+		#
+		# [[Nombre[4],Puntos[4],Fichas[4],PuntosGrupo[4]],[].[].[]
+		#    = numeroJugador*(4*4)+2*(4)
+		#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)	
+
+		imprimir_t(mensajeJuego)
+		
+		li $v0,5
+		syscall
+		
+		jr $ra
+
+
+
+
+#------------------------------------------------------#
+	
 
 RevisarPuntos:
 
