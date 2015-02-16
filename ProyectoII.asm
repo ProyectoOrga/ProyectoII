@@ -30,7 +30,9 @@ punto:			.asciiz "."
 dosPuntos:		.asciiz " :  "
 saltoDeLinea:		.asciiz "\n"
 mensaje: 		.asciiz "Jugador "
-texto:			.asciiz " Introduzca su nombre: "
+Introducir:		.asciiz "Introduzca su opcion de juego:  "
+Invalido:		.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
+texto:			.asciiz " introduzca su nombre: "
 mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
 Opcion: 	 	.asciiz " Opcion "
 
@@ -165,6 +167,15 @@ loopPrincipal:
 			lw $a0 turnoActual
 			lw $a1 jugadores
 			jal mostrarFichas
+			move $a0 $v0	# $a0 es el argumento de entrada de la funcion RecibirOpcionJugador
+			move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
+			jal RecibirOpcionJugador
+			
+			#jal VerificarJugada
+			
+			#jal ActualizarTablero
+			
+			#jal ImprimirTablero
 	
 
 		li 		$v0, 10
@@ -691,6 +702,9 @@ mostrarFichas:
 		#	* $a0: Turno actual
 		#	* $a1: Direccion de la "clase" jugadores
 		#
+		# Registros de salida:
+		#	* $v0 : La direccion del arreglo de fichas del jugador en turno
+		#
 
 		li $t2,4  # Tamano palabra
 		li $t3,2  # Columna que nos interesa
@@ -709,11 +723,11 @@ mostrarFichas:
 		add $a1 $a1 $t4 #Realizo el dsplazamiento
 		
 		lw $t1 ($a1) # Obtengo la direccion del arreglo
-
+		move $t6 $t1 # Muevo la direccion del arreglo
 
 		# Obtengo la direccion del arreglo de fichas del jugador i
 		li $t2 7	# Iterador en el ciclo
-		li $t9 1	# Iterador para el numero de opciones del jugador
+		li $t9 0	# Iterador para el numero de opciones del jugador
 		
 		move $t3 $a0 # Muevo el el numero correspondiente al jugador actual para imprimir
 		
@@ -756,7 +770,67 @@ mostrarFichas:
 				beqz $t2 regresarMain
 
 		regresarMain:
+			move $v0 $t6
+			move $v1 $t9
+			# Se debe hacer una estructura de datos para almacenar $v0 y $v1
+			# 	y devolver su direccion en $v0
 			jr $ra
+
+
+#------------------------------------------------------#
+RecibirOpcionJugador:
+
+
+	# Registros de entrada:
+	#
+	#	* $a0: Direccion de memoria del arreglo de fichas del jugador actual
+	#	* $a1: Numero de fichas que posee el jugador actual
+	#
+	# Registros de salida:
+	#	* $v0 : La direccion de la ficha que el jugador va a jugar
+	#
+	move $t4 $a0
+	li $t1 4
+
+	imprimir_t(Introducir)
+	
+	li $v0 5
+	syscall
+		
+	bge  $v0 $a1 verificacion
+	bltz $v0 verificacion
+	addi $v0 $v0 1
+	b ClacularDireccion
+	
+	verificacion:
+		imprimir_t(Invalido)
+		li $v0 5
+		syscall
+		bgt $v0 $a1 verificacion
+		bltz $v0 verificacion
+
+	ClacularDireccion:		
+		
+		#mult $t1 $v0
+		#mflo $t1
+	
+		lw $t5 ($t4)
+		
+		beqz $t5 ClacularDireccion
+		
+		beqz $v0 regreso
+		addi $v0 $v0 -1
+		add $t4 $t4 $t1
+		lw $t2 ($t5)
+		lw $t3 4($t0)
+		bnez $v0 ClacularDireccion 
+	
+	regreso:	
+	 	move $v0 $t5
+	 	lw $t2 ($v0)
+	 	lw $t3 4($v0)
+	 	jr $ra
+
 
 
 
