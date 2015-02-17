@@ -41,9 +41,9 @@ dosPuntos:			.asciiz " :  "
 saltoDeLinea:			.asciiz "\n"
 mensaje: 			.asciiz "Jugador "
 Introducir:			.asciiz "Introduzca su opcion de juego:  "
-Invalido:			.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
+Invalido:			.asciiz "Opcion invalida.Introduzca su opcion de juego: "
 texto:				.asciiz " introduzca su nombre: "
-mensajeParaElJugador: 		.asciiz " aqui estan sus opciones de juego :  "
+mensajeParaElJugador: 		.asciiz " aqui estan sus opciones de juego: "
 JugadaInvalida:			.asciiz "La jugada es invalida. "
 finJuego:			.asciiz "Fin del juego / " 
 ganadores:			.asciiz "Ganadores: \n"
@@ -110,7 +110,7 @@ por:				.asciiz "por "
 #                          INICIO DEL CODIGO PRINCIPAL                        #                      
 ###############################################################################
 
-main:
+main:  # FALTA
 
 		# Se configura la semilla del generador de numeros aleatorios:		
 		generarSemilla()
@@ -164,8 +164,8 @@ main:
 #  el numero del jugador que le toca sacar en la proxima 
 #  ronda
 #########################################################
-
-loopPrincipal:
+ 
+loopPrincipal: # FALTA
 
 	
 		# Se verifica si los puntos del grupo 1 son mayores o iguales que 100
@@ -381,7 +381,7 @@ errorLectura:
 	
 #-----------------------------------------------------------------------------#
 
-extraerPiedras:
+extraerPiedras:  # FALTA COMENTAR
 		#
 		# Descripcion de la funcion:
 		# 	Dada la direccion que almacena la informacion 
@@ -395,20 +395,20 @@ extraerPiedras:
 
 		move 	$t1,$a0
 
-		li $t4, 42
+		li		$t4, 42
 			
 		reservarEspacio(112)
-		sw $v0, fichas	
-		move $t5 $v0
+		sw		$v0, fichas	
+		move		$t5 $v0
 					
 		# Se reserva el espacio para la primera ficha
 		reservarEspacio(8)
 
-		li $t2,9
-		sw $t2,($v0)
-		sw $t2,4($v0)	
+		li		$t2,9
+		sw		$t2,($v0)
+		sw		$t2,4($v0)	
 
-		sw $v0 ($t5)
+		sw		$v0 ($t5)
 
 		cicloExtraer:
 
@@ -417,31 +417,26 @@ extraerPiedras:
 				srl       $t2, $t2, 0
 				andi 	$t2,$t2,255
 
-				move $fp, $sp #Prologo
-				addi $sp $sp -4
-				sw $fp, 4($sp) 
-				addi $sp, $sp, -4
-				sw $ra, 4($sp)
-				addi $sp, $sp, -4
-				sw $t4 4($sp)
+				move		$fp, $sp #Prologo
+				addi		$sp $sp -4
+				sw		$fp, 4($sp) 
+				addi		$sp, $sp, -4
+				sw		$ra, 4($sp)
+				addi		$sp, $sp, -4
+				sw		$t4 4($sp)
 
-				move $a3 $t4
-				move $a1,$t5
-				jal AgregarSimbolo
-				move $t5,$v0
+				move		$a3 $t4
+				move		$a1,$t5
+				jal		AgregarSimbolo
+				move		$t5,$v0
 
 
-				lw $t4 4($sp)
-				addi $sp, $sp, 4
-				lw $ra, 4($sp) #Epilogo
-				addi $sp, $sp, 4
-				lw $fp, 4($sp)
-				addi $sp, $sp, 4				
-
-				#sw $t2,letra
-				#li $v0, 4
-				#la $a0,letra
-				#syscall	
+				lw		$t4 4($sp)
+				addi		$sp, $sp, 4
+				lw		$ra, 4($sp) #Epilogo
+				addi		$sp, $sp, 4
+				lw		$fp, 4($sp)
+				addi		$sp, $sp, 4				
 
 				# Se lee el segundo caracter de la linea:
 
@@ -449,200 +444,211 @@ extraerPiedras:
 				srl       $t2, $t2, 8
 				andi 	$t2,$t2,255
 
-				move $fp, $sp #Prologo
-				addi $sp $sp -4
-				sw $fp, 4($sp) 
-				addi $sp, $sp, -4
-				sw $ra, 4($sp)	
-				addi $sp, $sp, -4
-				sw $t4 4($sp)	
+				# los prologos y epilogos no se pueden poner como 
+				# macros?
+				
+				move		$fp, $sp #Prologo
+				addi		$sp $sp -4
+				sw		$fp, 4($sp) 
+				addi		$sp, $sp, -4
+				sw		$ra, 4($sp)	
+				addi		$sp, $sp, -4
+				sw		$t4 4($sp)	
 		
-				move $a3 $t4
-				move $a1,$t5
-				jal AgregarSimbolo
-				move $t5,$v0
+				move		$a3 $t4
+				move		$a1,$t5
+				jal		AgregarSimbolo
+				move		$t5,$v0
 
-				lw $t4 4($sp)
-				addi $sp, $sp, 4
-				lw $ra, 4($sp) #Epilogo
-				addi $sp, $sp, 4
-				lw $fp, 4($sp)
-				addi $sp, $sp, 4
+				lw		$t4 4($sp)
+				addi		$sp, $sp, 4
+				lw		$ra, 4($sp) #Epilogo
+				addi		$sp, $sp, 4
+				lw		$fp, 4($sp)
+				addi		$sp, $sp, 4
 		
-				#sw $t2,letra
-				#li $v0, 4
-				#la $a0,letra
-				#syscall
-
-
 				# Se lee el tercer caracter de la linea:
 	
 				lw 		$t2, ($t1)
 				srl       $t2, $t2, 16
 				andi 	$t2,$t2,255
 
-				move $fp, $sp #Prologo
-				addi $sp $sp -4
-				sw $fp, 4($sp) 
-				addi $sp, $sp, -4
-				sw $ra, 4($sp)
-				addi $sp, $sp, -4
-				sw $t4 4($sp)
+				move		$fp, $sp #Prologo
+				addi		$sp $sp -4
+				sw		$fp, 4($sp) 
+				addi		$sp, $sp, -4
+				sw		$ra, 4($sp)
+				addi		$sp, $sp, -4
+				sw		$t4 4($sp)
 
-				move $a1,$t5
-				move $a3 $t4
-				jal AgregarSimbolo
-				move $t5,$v0
+				move		$a1,$t5
+				move		$a3 $t4
+				jal		AgregarSimbolo
+				move		$t5,$v0
 
-				lw $t4 4($sp)
-				addi $sp, $sp, 4
-				lw $ra, 4($sp) #Epilogo
-				addi $sp, $sp, 4
-				lw $fp, 4($sp)
-				addi $sp, $sp, 4
+				lw		$t4 4($sp)
+				addi		$sp, $sp, 4
+				lw		$ra, 4($sp) #Epilogo
+				addi		$sp, $sp, 4
+				lw		$fp, 4($sp)
+				addi		$sp, $sp, 4
 
-			
 				# Se lee el cuarto caracter de la linea:
 	
 				lw 		$t2, ($t1)
 				srl       $t2, $t2, 24
 				andi 	$t2,$t2,255
 
-				move $fp, $sp #Prologo
-				addi $sp $sp -4
-				sw $fp, 4($sp) 
-				addi $sp, $sp, -4
-				sw $ra, 4($sp)
-				addi $sp, $sp, -4
-				sw $t4 4($sp)
+				move		$fp, $sp #Prologo
+				addi		$sp $sp -4
+				sw 		$fp, 4($sp) 
+				addi		$sp, $sp, -4
+				sw		$ra, 4($sp)
+				addi		$sp, $sp, -4
+				sw		$t4 4($sp)
 
-				move $a1,$t5
-				move $a3 $t4
-				jal AgregarSimbolo
-				move $t5,$v0
+				move		$a1,$t5
+				move		$a3 $t4
+				jal		AgregarSimbolo
+				move		$t5,$v0
 
-
-				lw $t4 4($sp)
-				addi $sp, $sp, 4
-				lw $ra, 4($sp) #Epilogo
-				addi $sp, $sp, 4
-				lw $fp, 4($sp)
-				addi $sp, $sp, 4
+				lw		$t4 4($sp)
+				addi		$sp, $sp, 4
+				lw		$ra, 4($sp) #Epilogo
+				addi		$sp, $sp, 4
+				lw		$fp, 4($sp)
+				addi 	$sp, $sp, 4
 	
+				addi		$t1,$t1,4
+				addi		$t4,$t4,-1
+				bnez		$t4,cicloExtraer
 
-				addi $t1,$t1,4
-				addi $t4,$t4,-1
-				bnez $t4,cicloExtraer
-
-				jr $ra
+				jr 		$ra
 
 #-----------------------------------------------------------------------------#
 
-AgregarSimbolo:
-	# La entrada por ahora esta en $t2 (hay que arreglar las convenciones $a0 )
-	# La direccion de las fichas por ahora esta en $t5
-	# El numero casillas de la memoria recorrida se almacena en $a3
+AgregarSimbolo:  # FALTA COMENTAR Y ARREGLAR LAS CONVENCIONES
+		#
+		# Descripcion de la funcion: 
+		#	Recibe un caracter y determina si es un numero o no
+		#	para agregarlo a una ficha, y posteriormente al arreglo
+		#	de fichas
+		# Registros de entrada:
+		# Registros de salida:
+		#
+
+		# La entrada por ahora esta en $t2 (hay que arreglar las convenciones $a0 )
+		# La direccion de las fichas por ahora esta en $t5
+		# El numero casillas de la memoria recorrida se almacena en $a3
 		
-	li $s0, 48  # Corresponde al 0 en ASCII
-	li $t6, 41  # Corresponde al ) en ASCII
+		li		$s0, 48  # Corresponde al "0" en ASCII
+		li		$t6, 41  # Corresponde al ")" en ASCII
 
-	bgeu $t2,$s0,esNumero				
-	beq  $t2,$t6,cambiaCaja
-	blt  $t2 $s0 regresar
+		bgeu		$t2,$s0,esNumero				
+		beq 		$t2,$t6,cambiaCaja
+		blt 		$t2 $s0 regresar
 
-
-	esNumero:
+		esNumero:
 		
-		addi $t2,$t2,-48
-		#imprimir_i($t2)
+				addi		$t2,$t2,-48
 
-		lw $t4 ($a1)
-		move $t7,$t4
-		lw $t4,($t4)
+				lw		$t4,($a1)
+				move		$t7,$t4
+				lw		$t4,($t4)
 
-		beq $t4,9,guardar
-		bne $t4,9,siguiente
+				beq		$t4,9,guardar
+				bne		$t4,9,siguiente
 
-		guardar:
-			sw $t2,($t7)
-			b regresar
+				guardar:
+						sw		$t2,($t7)
+						b		regresar
 
-		siguiente:
-			sw $t2,4($t7)
-			b regresar
+				siguiente:
+						sw		$t2,4($t7)
+						b		regresar
 
-	cambiaCaja:
+		cambiaCaja:
 
-		bne $a3 1 crearCaja
-		beq $a3 1 regresar
+				bne		$a3 1 crearCaja
+				beq		$a3 1 regresar
 
-	crearCaja:
-		reservarEspacio(8)
-		li $t7 9
-		sw $t7 ($v0)
-		sw $t7 4($v0)
-		addi $a1,$a1,4
-		sw $v0,($a1)
+				crearCaja:
+						reservarEspacio(8)
+						li		$t7 9
+						sw		$t7 ($v0)
+						sw		$t7 4($v0)
+						addi		$a1,$a1,4
+						sw		$v0,($a1)
 		
-	regresar:	
-		move $v0,$a1	
-		jr $ra
+		regresar:	
+				move		$v0,$a1	
+				jr		$ra
 
 #-----------------------------------------------------------------------------#
-CrearClaseJugador:
+
+CrearClaseJugador:  # FALTA COMENTAR
+		#
+		# Descripcion de la funcion: 
+		#	Recibe un caracter y determina si es un numero o no
+		#	para agregarlo a una ficha, y posteriormente al arreglo
+		#	de fichas
+		# Registros de entrada:
+		# Registros de salida:
+		#
 	
+		#
+		# [[Nombre[4],PuntosGrupo[4],Fichas[4]],[].[].[]
+		#    = numeroJugador*(4*3)+2*(4)
+		#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)
+
+		reservarEspacio(64)
+		move		$v1,$v0
+	
+		# Se inicializan los puntos en 0
+		li		$a0 0
+		sw		$a0 4($v0)
+		sw		$a0 16($v0)
+		sw		$a0 28($v0)
+		sw		$a0 40($v0)
+		sw		$a0 44($v0)
+
+		move		$t0, $v0
+
+		# Se crea la lista de fichas para cada jugador:
+
+		li		$t1,0
+		li		$t2,4
+		li		$t3,2
+		li		$t8,3
+
+		mult 	$t2,$t8
+		mflo 	$t4 # $t4 = TamanoPalabra*NumeroColumna
+
+		mult 	$t3,$t2
+		mflo 	$t5 # $t5 = Columna que nos interesa [2]*TamanoPalabra
+	
+		crearLista:
+
+				mult		$t1,$t4
+				mflo 	$t6
+				add		$t6,$t6,$t5 
+
+				add		$t0,$t0,$t6
+		
+				reservarEspacio(28)
+				sw		$v0,($t0)
+
+				sub		$t0,$t0,$t6	
+				addi		$t1,$t1,1
+				bne		$t1,$t2,crearLista
+
+		move		$v0,$v1
+		jr		$ra
+	
+#-----------------------------------------------------------------------------#
+
+PedirYalmacenarNombreJugadores:  # FALTA
 	#
-	# [[Nombre[4],PuntosGrupo[4],Fichas[4]],[].[].[]
-	#    = numeroJugador*(4*3)+2*(4)
-	#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)
-
-	reservarEspacio(64)
-	move $v1,$v0
-	
-	# Se inicializan los puntos en 0
-	li $a0 0
-	sw $a0 4($v0)
-	sw $a0 16($v0)
-	sw $a0 28($v0)
-	sw $a0 40($v0)
-	sw $a0 44($v0)
-
-
-	move $t0, $v0
-
-	# Se crea la lista de fichas para cada jugador:
-
-	li $t1,0
-	li $t2,4
-	li $t3,2
-	li $t8,3
-
-	mult $t2,$t8
-	mflo $t4 # $t4 = TamanoPalabra*NumeroColumna
-
-	mult $t3,$t2
-	mflo $t5 # $t5 = Columna que nos interesa [2]*TamanoPalabra
-	
-	crearLista:
-		mult $t1,$t4
-		mflo $t6
-		add $t6,$t6,$t5 
-
-		add $t0,$t0,$t6
-		
-		reservarEspacio(28)
-		sw $v0,($t0)
-
-		sub $t0,$t0,$t6	
-		addi $t1,$t1,1
-		bne $t1,$t2,crearLista
-
-	move $v0,$v1
-	jr $ra
-	
-#-----------------------------------------------------------------------------#
-
-PedirYalmacenarNombreJugadores:
 	# Descripcion de la funcion:
 	#	Pide por consola los nombres de los jugadores y los almacena
 	#  en el arreglo correspondiente.
@@ -651,6 +657,8 @@ PedirYalmacenarNombreJugadores:
 	#		* $t7: Variable que almacenara la direccion de la clase jugador
 	#	Registro de salida:
 	#		Ninguno
+	#
+	
 
 	# [[Nombre[4],Puntos[4],Fichas[4],PuntosGrupo[4]],[].[].[]
 		#    = numeroJugador*(4*4)+2*(4)
@@ -712,7 +720,8 @@ PedirYalmacenarNombreJugadores:
 
 #-----------------------------------------------------------------------------#
 
-RepartirFichas:
+RepartirFichas:  # FALTA
+		#
 		# Descripcion de la funcion:
 		#	Reparte las fichas a los jugadores
 		# Planificador de registros:
@@ -722,6 +731,7 @@ RepartirFichas:
 		#  	Registros de salida:
 		#		* $v0: Arreglo de numero de fichas de los jugadores
 		#		* $v1: Numero del jugador que tiene la cochina
+		#
 
 		# [[Nombre[4],Puntos[4],Fichas[4]],[].[].[]
 		#    = numeroJugador*(4*4)+2*(4)
@@ -802,7 +812,7 @@ RepartirFichas:
 
 #-----------------------------------------------------------------------------#	
 		
-CrearClaseTablero:
+CrearClaseTablero:  # FALTA
 
 	# Estructura de la "Cabecera" del tablero:
 	# 	- 4 bytes que "apuntan" al primer elemento
@@ -839,8 +849,7 @@ CrearClaseTablero:
 
 #-----------------------------------------------------------------------------#
 	
-
-CambiarTurno:
+CambiarTurno:  # FALTA
 
 
 	#  Registros de entrada:
@@ -864,9 +873,9 @@ CambiarTurno:
 		jr $ra
 
 #-----------------------------------------------------------------------------#
-
-mostrarFichas:
-
+ 
+mostrarFichas:  # FALTA
+		#
 		# Registros de entrada:
 		#
 		#	* $a0: Turno actual
@@ -948,7 +957,7 @@ mostrarFichas:
 
 #-----------------------------------------------------------------------------#
 
-RecibirOpcionJugador:
+RecibirOpcionJugador:  # FALTA
 
 
 	# Registros de entrada:
@@ -1004,7 +1013,7 @@ RecibirOpcionJugador:
 
 #-----------------------------------------------------------------------------#
 
-actualizarTablero:
+actualizarTablero:  # FALTA
 	#
 	# Descripcion de la funcion:
 	#	Actualiza el tablero luego de que el jugador realice un movimiento valido
@@ -1096,7 +1105,6 @@ actualizarTablero:
 	
 #-----------------------------------------------------------------------------#
 
-
 imprimirTablero:
 	#
 	# Descripcion de la funcion:
@@ -1143,7 +1151,8 @@ imprimirTablero:
 	jr $ra
 
 #-----------------------------------------------------------------------------#
-VerificarJugada:
+
+VerificarJugada:  # FALTA
 
 	# Registros de entrada:
 	#
@@ -1248,7 +1257,7 @@ VerificarJugada:
 		
 #-----------------------------------------------------------------------------#
 
-RestarFichaJugador:
+RestarFichaJugador:  # FALTA
 
 	# Registros de entrada:
 	#
@@ -1295,7 +1304,7 @@ RestarFichaJugador:
 	
 #-----------------------------------------------------------------------------#
 
-VerificarSiSePuedeJugar:
+VerificarSiSePuedeJugar:  # FALTA
 	#
 	# Descripcion de la funcion: 
 	#	Funcion que verifica si un jugador pasa o no
@@ -1373,7 +1382,7 @@ VerificarSiSePuedeJugar:
 
 #-----------------------------------------------------------------------------#
 
-sumarPuntosN:
+sumarPuntosN:  # FALTA
 	#
 	# Descripcion de la funcion: 
 	#	Suma los puntos de los jugadores en caso
@@ -1387,7 +1396,7 @@ sumarPuntosN:
 	jr $ra
 
 #-----------------------------------------------------------------------------#
-sumarPuntosT:
+sumarPuntosT:  # FALTA
 	#
 	# Descripcion de la funcion: 
 	#	Suma los puntos de los jugadores en caso
@@ -1515,58 +1524,60 @@ sumarPuntosT:
 #-----------------------------------------------------------------------------#
 
 mezclarFichas:
-	#
-	# Descripcion de la funcion: 
-	#	Cuando comienza una nueva ronda, mezcla 
-	# 	las fichas en el arreglo de fichas usando
-	#	el algoritmo de Fisher-Yates
-	# Registros de entrada:
-	#	- $a0 : Direccion del arreglo de fichas
-	# Registros de salida:
-	#	- Ninguno
-	#
-	li $t0,27	# Variable de iteracion del ciclo
+		#
+		# Descripcion de la funcion: 
+		#	Cuando comienza una nueva ronda, mezcla 
+		# 	las fichas en el arreglo de fichas usando
+		#	el algoritmo de Fisher-Yates
+		# Registros de entrada:
+		#	- $a0 : Direccion del arreglo de fichas
+		# Registros de salida:
+		#	- Ninguno
+		#
+
+		li		$t0,27	# Variable de iteracion del ciclo
 	
-	cicloMezclarF:
+		cicloMezclarF:
 
-		# Se determina el entero random j para el swap:
+				# Se determina el entero random j para el swap:
 
-		li $v0, 42
-		li $a0, 0
-		move $a1, $t0
-		syscall
-		move $t1, $a0
+				li		$v0, 42
+				li		$a0, 0
+				move		$a1, $t0
+				syscall
+				move		$t1, $a0
 		
-		# Calculamos el desplazamiento de $t2 (A[i]):
-		# Arreglo[i] = Arreglo + i*TamanoTipo(4)
+				# Calculamos el desplazamiento de $t2 (A[i]):
+				# Arreglo[i] = Arreglo + i*TamanoTipo(4)
 	
-		li $t5,4
-		mult $t0,$t5
-		mflo $t5
-		add $t2,$a0,$t5 
+				li		$t5,4
+				mult		$t0,$t5
+				mflo		$t5
+				add		$t2,$a0,$t5 
 		
-		# Calculamos el desplazamiento de $t3 (A[j]):
-		# Arreglo[j] = Arreglo + i*TamanoTipo(4)
+				# Calculamos el desplazamiento de $t3 (A[j]):
+				# Arreglo[j] = Arreglo + i*TamanoTipo(4)
 
-		li $t5,4
-		mult $t1,$t5
-		mflo $t5
-		add $t2,$a0,$t5
-
-		# Se realiza el swap de los elementos:
+				li		$t5,4
+				mult		$t1,$t5
+				mflo		$t5
+				add 		$t2,$a0,$t5
+	
+				# Se realiza el swap de los elementos:
 		
-		move $t4,$t2    # temp := A[i]
- 		sw $t3,($t2)    # A[i] := A[j]
-		sw $t4,($t3)    # A[j] := A[i]
+				move		$t4,$t2      # temp := A[i]
+ 				sw		$t3,($t2)    # A[i] := A[j]
+				sw 		$t4,($t3)    # A[j] := A[i]
 		
-		addi $t0,$t0,-1
-		bne $t0,1,cicloMezclarF
+				addi		$t0,$t0,-1
+				bne		$t0,1,cicloMezclarF
 		
-	jr $ra
+		jr 		$ra
 
 
 #-----------------------------------------------------------------------------#
-limpiarTablero:
+
+limpiarTablero: # FALTA
 	#
 	# Descripcion de la funcion: 
 	#	Cuando se comienza una nueva ronda 
