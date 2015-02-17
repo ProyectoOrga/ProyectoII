@@ -19,40 +19,40 @@
 		.data
 
 jugadores:			.word     0
-tablero:				.word     0
-arregloTablero:		.word 	0
-rondas: 				.word	0
+tablero:			.word	  0
+arregloTablero:			.word	  0
+rondas: 			.word	  0
 nuevoJuego:			.word     0
 fichas:				.word     0
-numeroFichasJugadores: 	.word 	0
-tieneCochina:			.word 	0
-turnoRonda:			.word	0 
-turnoActual:			.word	0  
-piedrasArchivo:		.space  169
+numeroFichasJugadores: 		.word	  0
+tieneCochina:			.word	  0
+turnoRonda:			.word	  0
+turnoActual:			.word	  0  
+piedrasArchivo:			.space  169
 nombre:				.space   20
 letra:				.word     0
 nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
 errorLecturaA:			.asciiz "Error: Problemas con el archivo de entrada. \n"
 m_finalizarEjec:		.asciiz "Finalizara la ejecucion del programa."
-parentesisAbre:		.asciiz "("
+parentesisAbre:			.asciiz "("
 parentesisCierra:		.asciiz ")"
 punto:				.asciiz "."
 dosPuntos:			.asciiz " :  "
 saltoDeLinea:			.asciiz "\n"
-mensaje: 				.asciiz "Jugador "
+mensaje: 			.asciiz "Jugador "
 Introducir:			.asciiz "Introduzca su opcion de juego:  "
-Invalido:				.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
+Invalido:			.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
 texto:				.asciiz " introduzca su nombre: "
-mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
-JugadaInvalida:		.asciiz "La jugada es invalida. "
-finJuego:				.asciiz "Fin del juego / " 
+mensajeParaElJugador: 		.asciiz " aqui estan sus opciones de juego :  "
+JugadaInvalida:			.asciiz "La jugada es invalida. "
+finJuego:			.asciiz "Fin del juego / " 
 ganadores:			.asciiz "Ganadores: \n"
 m_chancleta:			.asciiz "Chancleta."
 m_zapatero:			.asciiz "Zapatero."
-m_normal:				.asciiz "victoria normal."
+m_normal:			.asciiz "victoria normal."
 Opcion:		 	 	.asciiz " Opcion "
 guion:				.asciiz "- "
-por:					.asciiz "por "
+por:				.asciiz "por "
 
 		.text
 
