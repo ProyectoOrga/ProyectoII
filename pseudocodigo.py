@@ -23,6 +23,62 @@ def ImprimirMensajeFelicitacion(Mensaje,ganador):
     print(Mensaje)
     print("Los ganadores son: ")
     print(Jugador[ganador]+" y "+Jugador[ganador])
+    
+def sumarPuntosN(Jugadores,Ganadores):
+	
+	if Ganadores == 0:
+		
+		# Se suman las fichas de los jugadores [1] y [3]
+		for i in range(7):
+			Suma = Suma + jugador1.fichas[i][0]
+			Suma = Suma + jugador1.fichas[i][1] 
+			Suma = Suma + jugador3.fichas[i][0]
+			Suma = Suma + jugador3.fichas[i][1]
+		
+		# Se asignan a los puntos de los jugadores [0] y [2]:
+		jugador0.puntos = jugador0.puntos + Suma
+		jugador2.puntos = jugador2.puntos + Suma
+		
+		
+	elif Ganadores == 1:
+		
+		# Se suman los puntos de los jugadores [0] y [2]
+		for i in range(7):
+			Suma = Suma + jugador0.fichas[i][0]
+			Suma = Suma + jugador0.fichas[i][1]
+			Suma = Suma + jugador2.fichas[i][0]
+			Suma = Suma + jugador2.fichas[i][1]
+		
+		# Se asignan a los puntos de los jugadores [1] y [3]
+		jugador1.puntos = jugador1.puntos + Suma
+		jugador3.puntos = jugador3.puntos + Suma
+		
+	
+#------------------------------------------------------------------------------#
+
+def sumarPuntosT(Jugadores,Ganadores):
+	
+	for i in range(7):
+			
+			Suma0 = Suma0 + jugador0.fichas[i][0]
+			Suma0 = Suma0 + jugador0.fichas[i][1]
+			Suma0 = Suma0 + jugador2.fichas[i][0]
+			Suma0 = Suma0 + jugador2.fichas[i][1]
+			
+			Suma1 = Suma1 + jugador1.fichas[i][0]
+			Suma1 = Suma1 + jugador1.fichas[i][1] 
+			Suma1 = Suma1 + jugador3.fichas[i][0]
+			Suma1 = Suma1 + jugador3.fichas[i][1]
+	
+	if (Suma1 > Suma0):	
+		jugador0.puntos = jugador0.puntos + Suma1
+		jugador2.puntos = jugador2.puntos + Suma1
+	
+	elif (Suma0 > Suma1):
+		jugador1.puntos = jugador1.puntos + Suma0
+		jugador3.puntos = jugador3.puntos + Suma3
+
+
 
 ################################################################################
 #					           Programa principal		   			           #
