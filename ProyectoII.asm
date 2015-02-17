@@ -19,17 +19,17 @@
 		.data
 
 jugadores:			.word     0
-tablero:				.word     0
-rondas: 				.word	0
+tablero:			.word     0
+rondas: 			.word	  0
 nuevoJuego:			.word     0
 fichas:				.word     0
-numeroFichasJugadores: 	.word 	0
-numeroDePasos:			.word	0
-tieneCochina:			.word 	0
-turnoRonda:			.word	0  
-turnoActual:			.word	0 
-jugadorJuega:			.word   0 
-piedrasArchivo:		.space  169
+numeroFichasJugadores: 		.word 	  0
+numeroDePasos:			.word 	  0
+tieneCochina:			.word     0
+turnoRonda:			.word	  0  
+turnoActual:			.word	  0 
+jugadorJuega:			.word     0 
+piedrasArchivo:			.space  169
 nombre:				.space   20
 letra:				.word     0
 nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
