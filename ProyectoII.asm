@@ -7,7 +7,7 @@
 #    Alejandra Cordero / Carnet: 12-10645
 #    Pablo Maldonado   / Carnet: 12-10561
 #
-# Ultima modificacion: 01/02/2015
+# Ultima modificacion: 17/02/2015
 #
 
 		.data
@@ -45,9 +45,6 @@ Opcion:		 	 	.asciiz " Opcion "
 guion:				.asciiz "- "
 por:					.asciiz "por "
 
-#nombre:		
-
-
 		.text
 
 ########################################################
@@ -78,11 +75,20 @@ por:					.asciiz "por "
 	syscall
 .end_macro
 
+.macro generarSemilla()
+	li 		$v0, 40	# Se configura la semilla del generador de numeros aleatorios
+	li 		$a0, 0	# del generador de numeros aleatorios
+	li 		$a1, 0
+	syscall		
+.end_macro
+
 ########################################################
 #             INICIO DEL CODIGO PRINCIPAL              #                      
 ########################################################
 
 main:
+		# Se configura la semilla delgenerador de numeros aleatorios:		
+		generarSemilla()
 
 		jal 		leerArchivoPiedras # Se retorna en $v0 la direccion de los datos leidos
 		move 	$a0,$v0
@@ -115,7 +121,7 @@ main:
 		sw 		$v0 tablero
 
 		li 		$a0 1
-		sw		$a0 rondas 	# NumeroRondas = 1
+		sw		$a0 rondas 	  # NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
 
 
@@ -267,6 +273,11 @@ loopPrincipal:
 				b loopPrincipal
 
 			#FinDeLaPartida:
+				# En $a0 recibe el turno actual
+				#jal SumarPuntos
+				#b loopPrincipal
+				
+				# NOTA: SE TIENE QUE CREAR UNA FUNCION LLAMADA SumaFichas
 			
 				#jal RevisarPuntos
 				
@@ -811,7 +822,7 @@ CambiarTurno:
 		
 	cambiar2:
 	
-		addi $v0 $t1 1
+		addi $v0 $a0 1
 		jr $ra
 
 #------------------------------------------------------#
@@ -942,7 +953,7 @@ RecibirOpcionJugador:
 		beqz $v0 regreso
 		addi $v0 $v0 -1
 		lw $t2 ($t5)
-		lw $t3 4($t0)
+		lw $t3 4($t5)
 		#addi $t4 $t4 4
 		bnez $v0 ClacularDireccion 
 	
@@ -991,9 +1002,6 @@ actualizarTablero:
 	lw $t3, 4($a0) # $t3 contiene el numero de elementos del arreglo 
 	lw $t4, 8($a0) # $t4 contiene el apuntador al ultimo elemento insertado 
 		
-	# Se calcula el desplazamiento para insertar los nuevos elementos 
-	# Arreglo[i] = Arreglo + i*TamanoTipo(12)
-	
 	beqz $t3,primerElemento
 	bnez $t3,InsertaFicha
 
@@ -1011,6 +1019,9 @@ actualizarTablero:
 		
 	InsertaFicha:
 
+	# Se calcula el desplazamiento para insertar los nuevos elementos 
+	# Arreglo[i] = Arreglo + i*TamanoTipo(12)
+	
 	li $t5,12
 	mult $t3,$t5
 	mflo $t5
@@ -1044,8 +1055,6 @@ actualizarTablero:
 	regresarF: 
 	jr $ra
 	
-
-
 #------------------------------------------------------#
 
 
@@ -1096,9 +1105,6 @@ imprimirTablero:
 
 #------------------------------------------------------#
 
-
-
-#------------------------------------------------------#
 VerificarJugada:
 
 	# Registros de entrada:
@@ -1249,7 +1255,209 @@ RestarFichaJugador:
 	regresarCiclo:
 		jr $ra
 	
+#------------------------------------------------------#
+
+VerificarSiSePuedeJugar:
+	#
+	# Descripcion de la funcion: 
+	#	Funcion que verifica si un jugador pasa o no
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de fichas del jugador
+	#       - $a1 : Direccion de la cabecera del tablero
+	#	- $a2 : Direccion del arreglo que posee el numero de fichas del jugador
+	# Registros de salida:
+	#	- $v0 : Retorna 1 si puede jugar y 0 si no
+	#
+	
+	move $t1 $a0 #Direccion del arreglo de fichas del jugador
+	move $t2 $a1 # Direccion de la cabecera del tablero
+	
+	lw $t3 4($t2) # Numero de elementos del tablero
+	
+	beqz $t3 primeraRonda
+	bnez $t3 VerificarLasFichas
+	
+	primeraRonda:
+		li $v0 1
+		jr $ra
+	
+	VerificarLasFichas:
+	
+		lw $t3 ($t2) # Direccion del primer elemento del tablero (extremo izquierdo)
+		lw $t4 8($2) # Direccion del ultimo elemento del tablero (extremo derecho)
+		
+		lw $t5 ($t3) # Elemento jugable en el extremo izquierdo del tablero
+		lw $t6 4($t4)# Elemento jugable en el extremo derecho del tablero
+		
+		# Recorremos todas las fichas del jugador para ver si es posible que juegue
+		
+		lw $t3 ($a2) # Numero de fichas del jugador 
+		li $v0 0 	# Inicializo $v0 en 0
+		
+		loopFichas:
+		
+			lw $t7 ($t1) # Contenido del arreglo de fichas
+			beqz $t7 Siguiente
+			bnez $t7 VerificarFicha2
+			
+			Siguiente:
+				addi $t1 $t1 4
+				b loopFichas
+				
+			VerificarFicha2:
+			
+				lw $t8 ($t7)	# Numero de la ficha
+				lw $t9 4($t7)	# Numero de la ficha
+				
+				beq $t8 $t5 Correcto
+				bne $t8 $t5 Verificar1
+				
+				Verificar1:
+					beq $t8 $t6 Correcto
+					bne $t8 $t6 Verificar2
+				Verificar2:
+					beq $t9 $t5 Correcto
+					bne $t9 $t5 Verificar3
+				Verificar3:
+					beq $t9 $t6 Correcto
+					bne $t9 $t6 Siguiente2
+					
+			Correcto:
+				li $v0 1
+				jr $ra
+				
+			Siguiente2:
+				addi $t1 $t1 4
+				addi $t3 $t3 -1
+				bnez $t3 loopFichas
+			jr $ra
+				
+#------------------------------------------------------#
+
+#SumarFichas:
+
+	#
+	# Descripcion de la funcion: 
+	#	Recibe el arreglo de jugadores y un numero correspondiente a un jugador
+	#    .y calcula la suma de todas las piedras del jugador dado y de su pareja
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
+	#       - $a1 : Numero correspondiente a un jugador
+	# Registros de salida:
+	#	- $v0 : Suma total de las piedras de un equipo
+	#
+	
+#------------------------------------------------------#
+
+#AsignarPuntos:
+	#
+	# Descripcion de la funcion: 
+	#	Asigna los puntos correspondientes al equipo ganador
+	# Registros de entrada:
+	#	- $a0 : Ganador 1
+	#       - $a1 : Ganador 2
+	# Registros de salida:
+	#
+	
+#------------------------------------------------------#
+
+#BuscarGanador:
+
+	#
+	# Descripcion de la funcion: 
+	#	Busca cual de los equipos suma la mayor cantidad de puntos con las piedras
+	#
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
+	#       
+	# Registros de salida:
+	#	* $v0 : Estructura que almacena:
+	#	- Primer elemento: Acumulado del equipo perdedor
+	#	- Ganador 1
+	# 	- Ganador 2
+
+
+
+#------------------------------------------------------#
+
+sumarPuntosN:
+	#
+	# Descripcion de la funcion: 
+	#	Suma los puntos de los jugadores en caso
+	#	de que un jugador se quede sin fichas.
+	# Registros de entrada:
+	# Registros de salida:
+	#
+
 #------------------------------------------------------#	
+
+sumarPuntosT:
+	#
+	# Descripcion de la funcion: 
+	#	Suma los puntos de los jugadores en caso
+	# 	de que se tranque una partida.
+	# Registros de entrada:
+	# Registros de salida:
+	#
+	
+#------------------------------------------------------#	
+
+mezclarFichas:
+	#
+	# Descripcion de la funcion: 
+	#	Cuando comienza una nueva ronda, mezcla 
+	# 	las fichas en el arreglo de fichas usando
+	#	el algoritmo de Fisher-Yates
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de fichas
+	# Registros de salida:
+	#	- Ninguno
+	#
+	li $t0,27	# Variable de iteracion del ciclo
+	
+	cicloMezclarF:
+
+		# Se determina el entero random j para el swap:
+
+		li $v0, 42
+		li $a0, 0
+		move $a1, $t0
+		syscall
+		move $t1, $a0
+		
+		# Calculamos el desplazamiento de $t2 (A[i]):
+		# Arreglo[i] = Arreglo + i*TamanoTipo(4)
+	
+		li $t5,4
+		mult $t0,$t5
+		mflo $t5
+		add $t2,$a0,$t5 
+		
+		# Calculamos el desplazamiento de $t3 (A[j]):
+		# Arreglo[j] = Arreglo + i*TamanoTipo(4)
+
+		li $t5,4
+		mult $t1,$t5
+		mflo $t5
+		add $t2,$a0,$t5
+
+		# Se realiza el swap de los elementos:
+		
+		move $t4,$t2    # temp := A[i]
+ 		sw $t3,($t2)    # A[i] := A[j]
+		sw $t4,($t3)    # A[j] := A[i]
+		
+		addi $t0,$t0,-1
+		bne $t0,1,cicloMezclarF
+		
+	jr $ra
+
+
+
+
+
+
+#------------------------------------------------------#
 
 RevisarPuntos:
 	#
