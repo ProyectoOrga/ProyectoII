@@ -114,7 +114,7 @@ main:
 		jal 		CrearClaseTablero
 		sw 		$v0 tablero
 
-		li 		$a0 2
+		li 		$a0 1
 		sw		$a0 rondas 	# NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
 
@@ -177,11 +177,14 @@ loopPrincipal:
 			move $s7 $v0
 		
 		continuarJuego:
+		
 			lw $a0 turnoActual
 			lw $a1 jugadores
 			jal mostrarFichas
+			
+			#jal VerificarSiSePuedeJugar
 		
-			VericacionJugada:
+			VerificacionJugada:
 				move $a0 $v0 # $a0 es la direccion del arreglo de fichas del jugador
 				move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
 				
@@ -201,6 +204,7 @@ loopPrincipal:
 				move $a0 $v0 # $a0 es el argumento de entrada de la funcion (direccion de la ficha seleccionada por el jugador)
 				lw $a1 tablero # Direccion del tablero
 				lw $a2 rondas # Numero de rondas
+				
 				addi $sp $sp -4
 				sw $v0, 4($sp)
 
@@ -210,7 +214,7 @@ loopPrincipal:
 					
 				 #Epilogo	
 
-				lw $a1 4($sp)
+				lw $a1 4($sp) # Direccion de la ficha seleccionada
 				addi	$sp $sp 4
 				lw $v1 4($sp)
 				addi $sp, $sp, 4
@@ -223,22 +227,49 @@ loopPrincipal:
 				
 				lw $s2 ($s1)
 				
-				beqz $s2 VericacionJugada # $s2 es 1 si la jugada es valida y 0 si no lo es
+				beqz $s2 VerificacionJugada # $s2 es 1 si la jugada es valida y 0 si no lo es
 			
 
 			lw $a0, tablero 
-			#lw $a1, ($v0)
 			lw $a2, 4($s1)
 			lw $a3, 8($s1)
 			
+			# Empilamos:
+			addi $sp $sp -4
+			sw $a1, 4($sp) # Direccion de la ficha seleccionada
+			addi $sp $sp -4
+			sw $v0, 4($sp) # Direccion del arrecho de fichas del jugador actual
 
 			jal actualizarTablero	
 
 			lw $a0, tablero		
 			jal imprimirTablero
-
 			
-		
+			# Desempilamos:
+			lw $a0 4($sp)  # Direccion del arrecho de fichas del jugador actual
+			addi $sp, $sp, 4
+			lw $a1 4($sp)  # Direccion de la ficha seleccionada
+			addi $sp, $sp, 4
+			
+			lw $a2 numeroFichasJugadores
+			lw $a3 turnoActual
+			
+			jal RestarFichaJugador
+			move $s1 $v0	# $v0 tiene el numero de fichas del jugador actual
+			
+			bnez $s1 Cambio
+			#beqz $s1 FinDeLaPartida
+			
+			Cambio:
+				lw $a0 turnoActual
+				jal CambiarTurno
+				sw $v0 turnoActual
+				b loopPrincipal
+
+			#FinDeLaPartida:
+			
+				#jal RevisarPuntos
+				
 		li 		$a0,1
 		li 		$a1,1
 		lw		$a2,jugadores
@@ -734,7 +765,7 @@ CrearClaseTablero:
 	reservarEspacio(12) # Cabecera del tablero
 				
 	move 	$t1 $v0      # $t1 contiene la cabecera 
-	li $t2,1
+	li $t2,0
 	
 	sw		$zero ($v0)   # Primer elemento del tablero
 	sw		$t2, 4($v0) # Numero de elementos del tablero
@@ -746,10 +777,10 @@ CrearClaseTablero:
 	sw		$v0 ($t1)     
 	sw		$v0 8($t1)
 	 
-	li $t2,2
-	sw $t2,($v0)
-	sw $t2,4($v0)
-	sw $zero,8($v0)
+	#li $t2,2
+	#sw $t2,($v0)
+	#sw $t2,4($v0)
+	#sw $zero,8($v0)
 	
 
 	# Se mueve a $v0 (valor de retorno) la cabecera creada
@@ -775,7 +806,7 @@ CambiarTurno:
 	beq $a0 $t2 cambiar
 	bne $a0 $t2 cambiar2
 	cambiar:
-		li $v0 1
+		li $v0 0
 		jr $ra
 		
 	cambiar2:
@@ -1170,6 +1201,53 @@ VerificarJugada:
 		sw $t9 8($v0) # Si la pieza va a la izquierda o a la derecha
 		
 		jr $ra
+		
+#------------------------------------------------------#
+
+RestarFichaJugador:
+
+	# Registros de entrada:
+	#
+	#	* $a0: Direccion de memoria del arreglo de fichas del jugador actual
+	#	* $a1: Direccion de memoria de la ficha que selecciono el jugador
+	#	* $a2 : Direccion de memoria que contiene el arreglo con el numero de fichas de cada jugador
+	#	* $a3 : Turno actual
+	# Registros de salida:
+	#	* $v0 : Numero de ficchas que tiene el jugador actual
+	
+	move $t1 $a0
+	move $t2 $a1
+	move $t3 $a2
+	move $t7 $a3
+	
+	li $t4 7
+	
+	loopBuscar:
+	
+		lw $t5 ($t1)
+		beq $t5 $t2 eliminar
+		bne $t5 $t2 seguir
+		
+		eliminar:
+			sw $zero ($t1)
+			li $t5 4
+			mult $t5 $t7
+			mflo $t5
+			add $t3  $t3 $t5
+			lw $t8 ($t3)
+			addi $t8 $t8 -1
+			sw $t8 ($t3)
+			move $v0 $t8 # Registro de salida
+			b regresarCiclo
+		
+		seguir:
+			addi $t1 $t1 4
+			addi $t4 $t4 -1
+			bnez $t4 loopBuscar
+		
+		
+	regresarCiclo:
+		jr $ra
 	
 #------------------------------------------------------#	
 
@@ -1234,7 +1312,6 @@ imprimirMensajeGanador:
 	#	- Ninguno
 	#
 	
-	move $t3,$a0
 	imprimir_t(finJuego)
 	imprimir_t(ganadores)
 
@@ -1247,7 +1324,6 @@ imprimirMensajeGanador:
 		
 		imprimir_t(guion)
 
-		
 		li $v0,4
 		move $a0,$t0
 		syscall
@@ -1271,15 +1347,15 @@ imprimirMensajeGanador:
 		move $a0,$t0
 		syscall
 
-
 		imprimir_t(guion)
 
 		li $v0,4
 		move $a0,$t1
 		syscall
 		
-
+		lw $t0,($)
 		b mensajesVictoria
+	
 
 	mensajesVictoria:	
 
