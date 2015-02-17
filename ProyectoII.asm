@@ -126,7 +126,8 @@ main:
 		lw 		$v0 jugadores
 		
 		# Es un  argumento, hay que cambiar $t7 por $a0 
-		move 	$t7 $v0  # Se estaria trabajando la estructura de datos jugador como algo global (no se si eso es bueno)
+		move 	$t7 $v0  # Se estaria trabajando la estructura de datos 
+					    # jugador como algo global (no se si eso es bueno)
 
 		# Pedir nombre a Jugadores
 		jal 		PedirYalmacenarNombreJugadores
@@ -360,9 +361,9 @@ leerArchivoPiedras:
 
 		# Se mueve a $v0 el file descriptor (retorno de la funcion)
 			
-		la $v0,piedrasArchivo
+		la		$v0,piedrasArchivo
 
-		jr $ra
+		jr 		$ra
 
 cerrar:		
 		# Se cierra el archivo:
@@ -382,26 +383,19 @@ errorLectura:
 extraerPiedras:
 		#
 		# Descripcion de la funcion:
-		# 	Abre el archivo PIEDRAS en modo lectura
-		#    y devuelve la direccion que almacena 
-		# 	la informacion leida del archivo.
+		# 	Dada la direccion que almacena la informacion 
+		#	del archivo leido, crea y almacena las fichas 
+		#	a utilizar en el juego.
 		# Registros de entrada:
-		#	- Ninguno
+		#	- $a0 : Informacion leida del archivo PIEDRAS
 		# Registros de salida:
-		#	- $v0 : Direccion que almacena la informacion leida
+		#	- $v0 : Arreglo que almacena las piedras
 		#
-
-		# Descripcion de la funcion:
-		# Planificador de registros:
-		#   Entrada: 
-		#		$a0 contiene la direccion de los datos leidos
 
 		move 	$t1,$a0
 
 		li $t4, 42
 			
-		#la $t5, fichas
-
 		reservarEspacio(112)
 		sw $v0, fichas	
 		move $t5 $v0
@@ -506,10 +500,6 @@ extraerPiedras:
 				lw $fp, 4($sp)
 				addi $sp, $sp, 4
 
-				#sw $t2,letra
-				#li $v0, 4
-				#la $a0,letra
-				#syscall	
 			
 				# Se lee el cuarto caracter de la linea:
 	
@@ -537,11 +527,7 @@ extraerPiedras:
 				addi $sp, $sp, 4
 				lw $fp, 4($sp)
 				addi $sp, $sp, 4
-
-				#sw $t2,letra
-				#li $v0, 4
-				#la $a0,letra
-				#syscall	
+	
 
 				addi $t1,$t1,4
 				addi $t4,$t4,-1
@@ -1626,131 +1612,132 @@ limpiarTablero:
 #------------------------------------------------------#
 
 RevisarPuntos:
-	#
-	# Descripcion de la funcion: 
-	#	Recibe el arreglo de jugadores y verifica cual
-	#    es el grupo ganador.
-	# Registros de entrada:
-	#	- $a0 : Direccion del arreglo de jugadores
-	# Registros de salida:
-	#	- $v0 : Indica el tipo de victoria (normal,chancleta,zapatero)
-	#	- $v1 : Indica el grupo los de ganadores
-	#
+		#
+		# Descripcion de la funcion: 
+		#	Recibe el arreglo de jugadores y verifica cual
+		#    es el grupo ganador.
+		# Registros de entrada:
+		#	- $a0 : Direccion del arreglo de jugadores
+		# Registros de salida:
+		#	- $v0 : Indica el tipo de victoria (normal,chancleta,zapatero)
+		#	- $v1 : Indica el grupo los de ganadores
+		#
 	
-	lw $t0, 4($a0)  # Puntos del grupo 0 (Pares)
-	lw $t1, 16($a0) # Puntos del grupo 1 (Impares)
+		lw		$t0, 4($a0)  # Puntos del grupo 0 (Pares)
+		lw		$t1, 16($a0) # Puntos del grupo 1 (Impares)
 	
-	bgt $t0,$t1,ganador0
-	blt $t0,$t1,ganador1
+		bgt		$t0,$t1,ganador0
+		blt		$t0,$t1,ganador1
 
-	ganador0:
-		li $v1,0
-		move $t2,$t1 # $t2 contiene el numero de puntos del perdedor
-		b TipoVictoria
+		ganador0:
+				li		$v1,0
+				move		$t2,$t1 # $t2 contiene el numero de puntos del perdedor
+				b		TipoVictoria
 	
-	ganador1:
-		li $v1,1
-		move $t2,$t0 # $t2 contiene el numero de puntos del perdedor
-		b TipoVictoria
+		ganador1:
+				li		$v1,1
+				move		$t2,$t0 # $t2 contiene el numero de puntos del perdedor
+				b		TipoVictoria
 	
-	TipoVictoria:
+		TipoVictoria:
 		
-		beqz $t2,zapatero
-		zapatero:
-			li $v0, 0
-			b retorno
+				beqz		$t2,zapatero
+				zapatero:
+					li $v0, 0
+					b retorno
 		
-		beq $t1,10,chancleta
-		chancleta:
-			li $v1,1	
-			b retorno
+				beq 		$t1,10,chancleta
+				chancleta:
+					li $v1,1	
+					b retorno
 		
-		# Victoria normal:
-		li $v0,2
+				# Victoria normal:
+				li $v0,2
 		
-	retorno:
-
-		jr $ra
+		retorno:
+				jr $ra
 
 #------------------------------------------------------#
 
 imprimirMensajeGanador:
-	#
-	# Descripcion de la funcion:
-	# 	Imprime por consola el grupo ganador y el tipo
-	#	de victoria (normal,chancleta,zapatero)
-	# Registros de entrada:
-	#	- $a0 : Variable que indica el tipo de victoria
-	#	- $a1 : Numero del grupo de los ganadores
-	#	- $a2 : Arreglo de los jugadores 
-	# Registros de salida:
-	#	- Ninguno
-	#
+		#
+		# Descripcion de la funcion:
+		# 	Imprime por consola el grupo ganador y el tipo
+		#	de victoria (normal,chancleta,zapatero)
+		# Registros de entrada:
+		#	- $a0 : Variable que indica el tipo de victoria
+		#	- $a1 : Numero del grupo de los ganadores
+		#	- $a2 : Arreglo de los jugadores 
+		# Registros de salida:
+		#	- Ninguno
+		#
 	
-	imprimir_t(finJuego)
-	imprimir_t(ganadores)
+		imprimir_t(finJuego)
+		imprimir_t(ganadores)
 
-	beq $a1,0,ganadoresPares
-	beq $a1,1,ganadoresImpares
+		beq		$a1,0,ganadoresPares
+		beq		$a1,1,ganadoresImpares
 
-	ganadoresPares:
-		lw $t0,($a2)
-		lw $t1,24($a2)
+		ganadoresPares:
+
+				lw		$t0,($a2)
+				lw		$t1,24($a2)
 		
-		imprimir_t(guion)
+				imprimir_t(guion)
 
-		li $v0,4
-		move $a0,$t0
-		syscall
+				li		$v0,4
+				move		$a0,$t0
+				syscall
 
-		imprimir_t(guion)
+				imprimir_t(guion)
 		
-		li $v0,4
-		move $a0,$t1
-		syscall
+				li		$v0,4
+				move		$a0,$t1
+				syscall
 
-
-		b mensajesVictoria
+				b		mensajesVictoria
 	
-	ganadoresImpares:
-		lw $t0,12($a2)
-		lw $t1,36($a2)
+		ganadoresImpares:
 
-		imprimir_t(guion)
+				lw		$t0,12($a2)
+				lw		$t1,36($a2)
 
-		li $v0,4
-		move $a0,$t0
-		syscall
+				imprimir_t(guion)
 
-		imprimir_t(guion)
+				li		$v0,4
+				move 	$a0,$t0
+				syscall
 
-		li $v0,4
-		move $a0,$t1
-		syscall
-		
-		lw $t0,($)
-		b mensajesVictoria
+				imprimir_t(guion)
+
+				li 		$v0,4
+				move 	$a0,$t1
+				syscall
+
+				b		mensajesVictoria
 	
 
-	mensajesVictoria:	
+		mensajesVictoria:	
 
-		imprimir_t(por)
+				imprimir_t(por)
 
-		beq $t3,0,mensajeZapatero
-		beq $t3,1,mensajeChancleta
-		beq $t3,2,mensajeNormal
+				beq		$t3,0,mensajeZapatero
+				beq 		$t3,1,mensajeChancleta
+				beq		$t3,2,mensajeNormal
 
-		mensajeZapatero:
-			imprimir_t(m_zapatero)
-			b retornoG
+				mensajeZapatero:
+					imprimir_t(m_zapatero)
+					b		retornoG
 
-		mensajeChancleta:
-			imprimir_t(m_chancleta)
-			b retornoG
+				mensajeChancleta:
+					imprimir_t(m_chancleta)
+					b		retornoG
 	
-		mensajeNormal:
-			imprimir_t(m_normal)
-			b retornoG
+				mensajeNormal:
+					imprimir_t(m_normal)
+					b		retornoG
 
-	retornoG:
-	 	jr $ra
+		retornoG:
+			 	jr		$ra
+
+#------------------------------------------------------#
