@@ -17,6 +17,7 @@ tablero:				.word     0
 rondas: 				.word	0
 nuevoJuego:			.word     0
 fichas:				.word     0
+numeroFichasJugadores: 	.word 	0
 tieneCochina:			.word 	0
 turnoRonda:			.word	0  
 turnoActual:			.word	0  
@@ -35,7 +36,14 @@ Invalido:				.asciiz "Opcion invalida.Introduzca su opcion de juego:  "
 texto:				.asciiz " introduzca su nombre: "
 mensajeParaElJugador: 	.asciiz " aqui estan sus opciones de juego :  "
 JugadaInvalida:		.asciiz "La jugada es invalida. "
-Opcion: 	 	.asciiz " Opcion "
+finJuego:				.asciiz "Fin del juego / " 
+ganadores:			.asciiz "Ganadores: \n"
+m_chancleta:			.asciiz "Chancleta."
+m_zapatero:			.asciiz "Zapatero."
+m_normal:				.asciiz "victoria normal."
+Opcion:		 	 	.asciiz " Opcion "
+guion:				.asciiz "- "
+por:					.asciiz "por "
 
 #nombre:		
 
@@ -64,6 +72,12 @@ Opcion: 	 	.asciiz " Opcion "
 	syscall
 .end_macro 
 
+
+.macro finalizarPrograma()
+	li		$v0 10
+	syscall
+.end_macro
+
 ########################################################
 #             INICIO DEL CODIGO PRINCIPAL              #                      
 ########################################################
@@ -91,8 +105,10 @@ main:
 		lw 		$a0, jugadores
 		lw 		$a1, fichas  		
 		jal 		RepartirFichas 
+		
 
-		sw $v0,tieneCochina	
+		sw $v1,tieneCochina	
+		sw $v0,numeroFichasJugadores
 
 		# Se crea la clase tablero
 		jal 		CrearClaseTablero
@@ -221,6 +237,12 @@ loopPrincipal:
 			lw $a0, tablero		
 			jal imprimirTablero
 
+			
+		
+		li 		$a0,1
+		li 		$a1,1
+		lw		$a2,jugadores
+		jal		imprimirMensajeGanador	
 		li 		$v0, 10
 				syscall	
 
@@ -620,9 +642,10 @@ RepartirFichas:
 		#		* $a0: Almacena el arreglo de Jugadores
 		#    	* $a1: Almacena el arreglo de las fichas 
 		#  	Registros de salida:
-		#
+		#		* $v0: Arreglo de numero de fichas de los jugadores
+		#		* $v1: Numero del jugador que tiene la cochina
 
-		# [[Nombre[4],Puntos[4],Fichas[4],PuntosGrupo[4]],[].[].[]
+		# [[Nombre[4],Puntos[4],Fichas[4]],[].[].[]
 		#    = numeroJugador*(4*4)+2*(4)
 		#    Jugador[i].fichas = i*(TamanoPalabra*NumeroColumnas)+(Columna que nos interesa(2)*TamanoPalabra)
 		
@@ -674,7 +697,7 @@ RepartirFichas:
 							bne $t6,6 noEsCochina
 
 							siEsCochina:
-								move $v0, $t1
+								move $v1, $t1
 
 						noEsCochina:
 
@@ -689,7 +712,14 @@ RepartirFichas:
 
 				addi		$t1,$t1,1
 				bne		$t1,4,cicloRepartir
-			
+		
+		reservarEspacio(16)
+		li $t9,7
+		sw $t9,($v0)
+		sw $t9,4($v0)
+		sw $t9,8($v0)
+		sw $t9,12($v0)
+	
 		jr $ra
 
 #------------------------------------------------------#	
@@ -1144,13 +1174,132 @@ VerificarJugada:
 #------------------------------------------------------#	
 
 RevisarPuntos:
+	#
+	# Descripcion de la funcion: 
+	#	Recibe el arreglo de jugadores y verifica cual
+	#    es el grupo ganador.
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
+	# Registros de salida:
+	#	- $v0 : Indica el tipo de victoria (normal,chancleta,zapatero)
+	#	- $v1 : Indica el grupo los de ganadores
+	
+	lw $t0, 4($a0)  # Puntos del grupo 0 (Pares)
+	lw $t1, 16($a0) # Puntos del grupo 1 (Impares)
+	
+	bgt $t0,$t1,ganador0
+	blt $t0,$t1,ganador1
 
-	li $v0 1
-	jr $ra
+	ganador0:
+		li $v1,0
+		move $t2,$t1 # $t2 contiene el numero de puntos del perdedor
+		b TipoVictoria
+	
+	ganador1:
+		li $v1,1
+		move $t2,$t0 # $t2 contiene el numero de puntos del perdedor
+		b TipoVictoria
+	
+	TipoVictoria:
+		
+		beqz $t2,zapatero
+		zapatero:
+			li $v0, 0
+			b retorno
+		
+		beq $t1,10,chancleta
+		chancleta:
+			li $v1,1	
+			b retorno
+		
+		# Victoria normal:
+		li $v0,2
+		
+	retorno:
+
+		jr $ra
 
 #------------------------------------------------------#
 
-fin:
+imprimirMensajeGanador:
+	#
+	# Descripcion de la funcion:
+	# 	Imprime por consola el grupo ganador y el tipo
+	#	de victoria (normal,chancleta,zapatero)
+	# Registros de entrada:
+	#	- $a0 : Variable que indica el tipo de victoria
+	#	- $a1 : Numero del grupo de los ganadores
+	#	- $a2 : Arreglo de los jugadores 
+	# Registros de salida:
+	#	- Ninguno
+	#
+	
+	move $t3,$a0
+	imprimir_t(finJuego)
+	imprimir_t(ganadores)
 
-	li $v0, 10
-	syscall
+	beq $a1,0,ganadoresPares
+	beq $a1,1,ganadoresImpares
+
+	ganadoresPares:
+		lw $t0,($a2)
+		lw $t1,24($a2)
+		
+		imprimir_t(guion)
+
+		
+		li $v0,4
+		move $a0,$t0
+		syscall
+
+		imprimir_t(guion)
+		
+		li $v0,4
+		move $a0,$t1
+		syscall
+
+
+		b mensajesVictoria
+	
+	ganadoresImpares:
+		lw $t0,12($a2)
+		lw $t1,36($a2)
+
+		imprimir_t(guion)
+
+		li $v0,4
+		move $a0,$t0
+		syscall
+
+
+		imprimir_t(guion)
+
+		li $v0,4
+		move $a0,$t1
+		syscall
+		
+
+		b mensajesVictoria
+
+	mensajesVictoria:	
+
+		imprimir_t(por)
+
+		beq $t3,0,mensajeZapatero
+		beq $t3,1,mensajeChancleta
+		beq $t3,2,mensajeNormal
+
+		mensajeZapatero:
+			imprimir_t(m_zapatero)
+			b retornoG
+
+		mensajeChancleta:
+			imprimir_t(m_chancleta)
+			b retornoG
+	
+		mensajeNormal:
+			imprimir_t(m_normal)
+			b retornoG
+
+	retornoG:
+	 	jr $ra
