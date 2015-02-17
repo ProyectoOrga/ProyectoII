@@ -17,6 +17,7 @@ tablero:		.word     0
 rondas: 		.word	0
 nuevoJuego:		.word     0
 fichas:			.word     0
+fichasJugadores:	.word     0
 tieneCochina:		.word 	0
 turnoRonda:		.word	0  
 turnoActual:		.word	0  
@@ -98,8 +99,6 @@ main:
 		jal 		CrearClaseTablero
 		sw 		$v0 tablero
 
-
-
 		li 		$a0 1
 		sw		$a0 rondas 	# NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
@@ -170,7 +169,7 @@ loopPrincipal:
 			jal mostrarFichas
 			
 			VericacionJugada:
-				move $a0 $v0 # $a0 es la direccion del arreglo de fichas del jugador
+				move $a0 $v0 # $a0 es la direccion del arreglo de fichas del jugador (se requiere para proximas funciones)
 				move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
 				
 				#Prologo
@@ -186,18 +185,23 @@ loopPrincipal:
 				
 				jal RecibirOpcionJugador
 			
-				move $a0 $v0 # $a0 es el argumento de entrada de la funcion (direccion de la ficha seleccionada por el jugador)
+				move $a0 $v0 # $a0 es el argumento de entrada de la funcion (direccion de la ficha seleccionada por el jugador) se requiere
 				lw $a1 tablero # Direccion del tablero
 				lw $a2 rondas # Numero de rondas
+				
+				addi $sp $sp -4
+				sw $a0, 4($sp)
 				
 				jal VerificarJugada
 				
 				move $s1 $v0 # Registro de salida de la funcion
 				
 				 #Epilogo
-				lw $v1 4($sp)
+				lw $s3 4($sp) # Direccion de la ficha seleccionada
 				addi $sp, $sp, 4
-				lw $v0 4($sp)
+				lw $v1 4($sp)# Numero de fichas que posee el jugador actual
+				addi $sp, $sp, 4
+				lw $v0 4($sp)# La direccion del arreglo de fichas del jugador actual
 				addi $sp, $sp, 4
 				lw $ra, 4($sp)
 				addi $sp, $sp, 4
@@ -208,9 +212,23 @@ loopPrincipal:
 				
 				beqz $s2 VericacionJugada # $s2 es 1 si la jugada es valida y 0 si no lo es
 			
+			addi $sp $sp -4
+			sw $s3, 4($sp) # Direccion de la ficha seleccionada
+			addi $sp $sp -4
+			sw $v0, 4($sp) # Direccion del arreglo de fichas del jugador actual  
+				
 			#jal ActualizarTablero
 			
 			#jal ImprimirTablero
+			
+				
+			lw $a0 4($sp) # Direccion del arreglo de fichas del jugador
+			addi $sp, $sp, 4
+			lw $a1 4($sp) # Direccion de la ficha seleccionada
+			addi $sp, $sp, 4	
+			lw   $a3 fichasJugadores # Arreglo que contiene la cantidad de fichas de cada jugador
+			
+			jal RestarFichaJugador
 	
 
 		li 		$v0, 10
@@ -702,9 +720,9 @@ CrearClaseTablero:
 	
 	
 	reservarEspacio(224)
-	li $t2 2
-	sw $t2 ($v0) # Prueba (Guardo 2,2)
-	sw $t2 4($v0)
+	#li $t2 2
+	#sw $t2 ($v0) # Prueba (Guardo 2,2)
+	#sw $t2 4($v0)
 	
 	sw $v0 ($t1) # Almaceno el primero elemento
 	sw $v0 8($t1) # Almaceno el ultimo elemento
@@ -986,6 +1004,23 @@ VerificarJugada:
 		
 		jr $ra
 	
+#------------------------------------------------------#	
+RestarFichaJugador:
+
+	# Registros de entrada:
+	#
+	#	* $a0: Direccion de memoria del arreglo de fichas del jugador actual
+	#	* $a1: Direccion de memoria de la ficha que selecciono el jugador
+	#	* $a2 : Direccion de memoria que contiene el arreglo con el numero de fichas de cada jugador
+	#
+	# Registros de salida:
+
+
+b fin
+
+
+
+
 #------------------------------------------------------#	
 
 RevisarPuntos:
