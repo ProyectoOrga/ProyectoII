@@ -60,13 +60,19 @@ def sumarPuntosT(Jugadores,Ganadores):
 	
 	for i in range(7):
 			
+			# Jugador 0
 			Suma0 = Suma0 + jugador0.fichas[i][0]
 			Suma0 = Suma0 + jugador0.fichas[i][1]
+			
+			# Jugador 2
 			Suma0 = Suma0 + jugador2.fichas[i][0]
 			Suma0 = Suma0 + jugador2.fichas[i][1]
 			
+			# Jugador 1 
 			Suma1 = Suma1 + jugador1.fichas[i][0]
 			Suma1 = Suma1 + jugador1.fichas[i][1] 
+			
+			# Jugador 3
 			Suma1 = Suma1 + jugador3.fichas[i][0]
 			Suma1 = Suma1 + jugador3.fichas[i][1]
 	

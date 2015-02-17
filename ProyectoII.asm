@@ -5,7 +5,7 @@
 # por consola para 4 jugadores
 # escrito en MIPS Assembly
 #
-# Nombres:
+# Nombres: 
 #    Alejandra Cordero / Carnet: 12-10645
 #    Pablo Maldonado   / Carnet: 12-10561
 #
@@ -19,16 +19,17 @@
 		.data
 
 jugadores:			.word     0
-tablero:			.word	  0
-arregloTablero:			.word	  0
-rondas: 			.word	  0
+tablero:				.word     0
+rondas: 				.word	0
 nuevoJuego:			.word     0
 fichas:				.word     0
-numeroFichasJugadores: 		.word	  0
-tieneCochina:			.word	  0
-turnoRonda:			.word	  0
-turnoActual:			.word	  0  
-piedrasArchivo:			.space  169
+numeroFichasJugadores: 	.word 	0
+numeroDePasos:			.word	0
+tieneCochina:			.word 	0
+turnoRonda:			.word	0  
+turnoActual:			.word	0 
+jugadorJuega:			.word   0 
+piedrasArchivo:		.space  169
 nombre:				.space   20
 letra:				.word     0
 nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
@@ -43,12 +44,16 @@ mensaje: 			.asciiz "Jugador "
 Introducir:			.asciiz "Introduzca su opcion de juego:  "
 Invalido:			.asciiz "Opcion invalida.Introduzca su opcion de juego: "
 texto:				.asciiz " introduzca su nombre: "
+paso:				.asciiz "  ha pasado \n"
+Tjuego:				.asciiz " Tablero de juego: \n"
+raya:				.asciiz " ---------------------- \n"
 mensajeParaElJugador: 		.asciiz " aqui estan sus opciones de juego: "
 JugadaInvalida:			.asciiz "La jugada es invalida. "
 finJuego:			.asciiz "Fin del juego / " 
 ganadores:			.asciiz "Ganadores: \n"
 m_chancleta:			.asciiz "Chancleta."
 m_zapatero:			.asciiz "Zapatero."
+
 m_normal:			.asciiz "victoria normal."
 Opcion:		 	 	.asciiz " Opcion "
 guion:				.asciiz "- "
@@ -145,14 +150,17 @@ main:  # FALTA
 
 		# Se crea la clase tablero
 		jal 		CrearClaseTablero
-		sw 		$v0, tablero
-		sw 		$v1, arregloTablero
+		sw 		$v0 tablero
 
 		li 		$a0 1
 		sw		$a0 rondas 	  # NumeroRondas = 1
 		sw		$a0 nuevoJuego   # NuevoJuego = True
 
-
+		# Se inicializan el numero de pasadas:
+		
+		li 		$a0 0
+		sw		$a0 numeroDePasos
+		
 		# Se inicializan las variables de los turnos del juego
 
 		lw 		$s0,tieneCochina
@@ -205,22 +213,68 @@ loopPrincipal: # FALTA
 			
 			li $s1 0
 			sw $s1 nuevoJuego  # NuevoJuego=False
-			jal CrearClaseTablero
-			sw $v0 tablero     # tablero almacena la cabecera del Tablero 
+			# jal CrearClaseTablero Limpiar tablero
+			#sw $v0 tablero     # tablero almacena la cabecera del Tablero 
+			
+			# Argumento de entrada de la funcion CambiarTurno
+			lw $a0 turnoRonda
+			
 			jal CambiarTurno
-			move $s7 $v0
+			
+			# Argumento de salida de la funcion CambiarTurno
+			#	*$v0: Turno actual
+			
+			sw $v0 turnoRonda
+			sw $v0 turnoActual
+			
+			# Se inicializan el numero de pasadas:
+		
+			li 		$a0 0
+			sw		$a0 numeroDePasos
+			
+			# move $s7 $v0
 		
 		continuarJuego:
 		
 			lw $a0 turnoActual
 			lw $a1 jugadores
 			jal mostrarFichas
+						
+			#lw $a2 numeroFichasJugadores
+			#lw $a3 turnoActual
 			
-			#jal VerificarSiSePuedeJugar
+			# Empilo
+			
+			addi $sp $sp -4
+			sw $v1, 4($sp) # Numero fichas jugador
+			addi $sp $sp -4
+			sw $v0, 4($sp)  # Direccion del arreglo de fichas
+			
+			# Cargo los argumentos de entrada:
+			move $a0 $v0
+			lw $a1 tablero
+			lw $t9 ($a1)
+			lw $t8 8($a1)
+			move $a2 $v1 # Numero de fichas del jugador
+			
+			jal VerificarSiSePuedeJugar
+			
+			# Desempilo:
+			lw $s6 4($sp) # Direccion de la ficha seleccionada
+			addi	$sp $sp 4
+			lw $s7 4($sp) # Numero de fichas del jugador
+			addi	$sp $sp 4
+			
+			beq $v0 1 VerificacionJugada
+			beqz $v0 JugadorPaso
 		
 			VerificacionJugada:
-				move $a0 $v0 # $a0 es la direccion del arreglo de fichas del jugador
-				move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
+			
+
+				li $t1 1
+				sw $t1 jugadorJuega # jugadorJuega  = True
+				#move $a0 $v0 # $a0 es la direccion del arreglo de fichas del jugador
+				#move $a1 $v1 # $a1 es el numero de fichas que tiene el jugador actual
 				
 				#Prologo
 				move $fp, $sp 
@@ -229,20 +283,39 @@ loopPrincipal: # FALTA
 				addi $sp, $sp, -4
 				sw $ra, 4($sp)
 				addi $sp $sp -4
-				sw $v0, 4($sp)
+				sw $s6, 4($sp)
 				addi $sp $sp -4
-				sw $v1, 4($sp) 
+				sw $s7, 4($sp) 
+				
+				# Parametros de entrada de la funcion:
+				move $a0 $s6	# Direccion del arreglo de fichas del jugador
+				move $a1 $s7	# Numero de fichas del jugador
 				
 				jal RecibirOpcionJugador
-			
-				move $a0 $v0 # $a0 es el argumento de entrada de la funcion (direccion de la ficha seleccionada por el jugador)
+				
+				# Parametro de salida de la funcion:
+				# $v0 : direccion de la ficha seleccionada
+				
+				
+				# Parametros de entrada de la funcion:
+				move $a0 $v0 # Direccion de la ficha seleccionada por el jugador
 				lw $a1 tablero # Direccion del tablero
 				lw $a2 rondas # Numero de rondas
 				
+				# Empilo
 				addi $sp $sp -4
 				sw $v0, 4($sp)
 
 				jal VerificarJugada
+				
+				# Parametro de salida de la funcion:
+				# $v0: Posee la direccion de un arreglo con tres elementos que contiene:
+				#	- Primer elemento: 1 si la jugada es valida 0 si no lo es
+				#	- Segundo elemento: 1 si se tiene que voltear la ficha al momento
+				#				de imprimirse 0 si no
+				#	- Tercer elemento: 0 si la ficha va en el extremo izquierdo del tablero
+				#				1 si va en el extremo derecho
+				
 				
 				move $s1 $v0 # Registro de salida de la funcion
 					
@@ -263,10 +336,10 @@ loopPrincipal: # FALTA
 				
 				beqz $s2 VerificacionJugada # $s2 es 1 si la jugada es valida y 0 si no lo es
 			
-
-			lw $a0, tablero 
-			lw $a2, 4($s1)
-			lw $a3, 8($s1)
+			# Paramatros de entrada de la funcion actualizarTablero
+			lw $a0, tablero	# Direccion del tablero
+			lw $a2, 4($s1)	# $a2 es 1 si la ficha se tiene que voltear a momento de imprimirse y 0 si no
+			lw $a3, 8($s1)	# $a3 es 0 si la ficha va en el extremo izquierdo del tablero y 1 si va a la derecha
 			
 			# Empilamos:
 			addi $sp $sp -4
@@ -276,29 +349,127 @@ loopPrincipal: # FALTA
 
 			jal actualizarTablero	
 
-			lw $a0, tablero		
+			# Parametros de entrada de la funcion imprimirTablero
+			lw $a0, tablero	# Direccion de la cabecera del tablero	
 			jal imprimirTablero
 			
 			# Desempilamos:
-			lw $a0 4($sp)  # Direccion del arrecho de fichas del jugador actual
+			
+			# Prametros de entrada de la funcion RestarFichasJugadores
+			lw $a0 4($sp)  # Direccion del arreglo de fichas del jugador actual
 			addi $sp, $sp, 4
 			lw $a1 4($sp)  # Direccion de la ficha seleccionada
 			addi $sp, $sp, 4
 			
-			lw $a2 numeroFichasJugadores
-			lw $a3 turnoActual
+			lw $a2 numeroFichasJugadores # Direccion del arreglo que almacena el numero de ficha de los jugadores
+			lw $a3 turnoActual	# Turno actual
 			
 			jal RestarFichaJugador
-			move $s1 $v0	# $v0 tiene el numero de fichas del jugador actual
 			
-			bnez $s1 Cambio
-			#beqz $s1 FinDeLaPartida
+			# Parametro de salida de la funcion:
+			#	* $v0 : Numero de fichas que posee el jugador actual
+			
+			
+			move $s1 $v0		# $v0 tiene el numero de fichas del jugador actual
+			
+			li $s2 1 # JugadorPaso = False
+			bnez $s1 Cambio		# Se cambia el turno
+			beqz $s1 SumarPuntos	# Se termina la ronda (No quedo trancado el juego)
 			
 			Cambio:
 				lw $a0 turnoActual
 				jal CambiarTurno
 				sw $v0 turnoActual
-				b loopPrincipal
+				
+				#lw $a0 jugadores
+				#move $a1 $v0
+				#jal SumarFichas
+				
+				lw $s1 jugadorJuega
+				beqz $s1 jugadorNojugo
+				bnez $s1 jugadorJugo
+				
+				jugadorNojugo:
+				
+					b loopPrincipal
+				
+				jugadorJugo:
+				
+					# El numero de paso seguidos se inicializa en 0
+					li $s1 0
+					sw $s1 numeroDePasos 
+					b loopPrincipal
+				
+	SumarPuntos:
+	
+	
+				
+		li $s1 1
+		sw $s1 nuevoJuego  # NuevoJuego=True
+			
+		lw $s1 rondas
+		addi $s1 $s1 1
+		sw $s1 rondas
+	
+		
+		
+		# Argumentos de entrada de la funcion CambiarTunro
+		lw $a0 turnoActual
+		jal CambiarTurno
+		
+		move $a0 $v0
+		jal SumarPuntosNormal
+
+		#lw $a0,tablero
+		#jal limpiarTablero	
+		#b loopPrincipal
+		b fin
+		
+				
+	JugadorPaso:
+	
+		# Parametros de entrada de la funcion imprimirTablero
+		lw $a0, tablero	# Direccion de la cabecera del tablero	
+		jal imprimirTablero
+			
+		lw $a0 turnoActual	
+		jal ImprimirMensajeDePaso
+		
+		lw $s1 numeroDePasos
+		addi $s1 $s1 1
+		sw $s1 numeroDePasos 
+		
+		li $t1 0
+		sw $t1 jugadorJuega # jugadorJuega  = False
+		
+		beq $s1 4 SeTerminoLaRonda # Se termino la ronda porque se quedo trancado el juego
+		bne $s1 4 Cambio
+
+		
+		SeTerminoLaRonda:
+
+			# LimpriarTablero
+			# Sumar puntos (Trancado)
+			# b loopPrincipal
+			
+			# Argumentos de entrada de la funcion:
+			lw $a0 jugadores
+			# jal SumarPuntosTrancado
+			
+			# Argumentos de salida:
+			
+			li $s1 1
+			sw $s1 nuevoJuego  # NuevoJuego=True
+			
+			lw $s1 rondas
+			addi $s1 $s1 1
+			sw $s1 rondas
+			
+			#lw $a0,tablero
+			#jal limpiarTablero
+			#b loopPrincipal
+
+			b fin
 
 			#FinDeLaPartida:
 				# En $a0 recibe el turno actual
@@ -306,13 +477,8 @@ loopPrincipal: # FALTA
 				#b loopPrincipal
 				
 				# NOTA: SE TIENE QUE CREAR UNA FUNCION LLAMADA SumaFichas
-			
-				#jal RevisarPuntos
-				
-		li 		$a0,1
-		li 		$a1,1
-		lw		$a2,jugadores
-		jal		imprimirMensajeGanador	
+
+	fin:
 		li 		$v0, 10
 				syscall	
 
@@ -819,7 +985,7 @@ CrearClaseTablero:  # FALTA
 	# 	- 4 bytes que almacenan el numero de elementos que tiene la lista
 	# 	- 4 bytes que "apuntan" al ultimo elemento de la lista
 	
-	reservarEspacio(12) # Cabecera del tablero
+	reservarEspacio(16) # Cabecera del tablero
 				
 	move 	$t1 $v0      # $t1 contiene la cabecera 
 	li $t2,0
@@ -827,15 +993,14 @@ CrearClaseTablero:  # FALTA
 	sw		$zero ($v0)   # Primer elemento del tablero
 	sw		$t2, 4($v0) # Numero de elementos del tablero
 	sw		$zero, 8($v0) # Primer elemento del tablero
+	sw		$zero, 12($v0) # Direccion del primer elemento del tablero
 	
 	reservarEspacio(336)
-
-	# Se mueve a $v1 (valor de retorno) la direccion del primer elemento del arreglo
-	move $v1 $v0
 	
 	# Se inicializan las direcciones del primer y ultimo elemento del tablero
 	sw		$v0 ($t1)     
 	sw		$v0 8($t1)
+	sw		$v0 12($t1)
 	 
 	#li $t2,2
 	#sw $t2,($v0)
@@ -914,10 +1079,12 @@ mostrarFichas:  # FALTA
 		imprimir_i($t3)
 		imprimir_t(mensajeParaElJugador)
 		imprimir_t(saltoDeLinea)
+		
+		lw $t8 ($t1)
 
 		loopMostrarFicha:
 		
-			beq $t1 0 saltar
+			beqz  $t8 saltar
 
 			lw $t3 ($t1) # Obtengo la direccion de la caja que contiene la ficha
 			lw $t4 ($t3) # Obtengo un valor de la ficha
@@ -940,17 +1107,18 @@ mostrarFichas:  # FALTA
 
 			imprimir_t(parentesisCierra)
 			imprimir_t(saltoDeLinea)
-
+			addi $t9 $t9 1
+			
 			saltar:
 				addi $t1 $t1 4
-				addi $t9 $t9 1
+				lw $t8 ($t1)
 				addi $t2 $t2 -1
 				bnez $t2 loopMostrarFicha
 				beqz $t2 regresarMain
 
 		regresarMain:
-			move $v0 $t6
-			move $v1 $t9
+			move $v0 $t6  # La direccion del arreglo de fichas del jugador en turno
+			move $v1 $t9 # Numero de fichas del jugador
 			# Se debe hacer una estructura de datos para almacenar $v0 y $v1
 			# 	y devolver su direccion en $v0
 			jr $ra
@@ -1046,18 +1214,24 @@ actualizarTablero:  # FALTA
 
 	# $a0 tiene la cabecera
 
-	lw $t2, ($a0)  # $t2 contiene el apuntador al primer elemento del arreglo
+	lw $t2, 12($a0)  # $t2 contiene el apuntador al primer elemento del arreglo
 	lw $t3, 4($a0) # $t3 contiene el numero de elementos del arreglo 
 	lw $t4, 8($a0) # $t4 contiene el apuntador al ultimo elemento insertado 
 		
+	# Se calcula el desplazamiento para insertar los nuevos elementos 
+	# Arreglo[i] = Arreglo + i*TamanoTipo(12)
+	
 	beqz $t3,primerElemento
 	bnez $t3,InsertaFicha
 
 	primerElemento:
+	
+		lw $t2, ($a0)  # $t2 contiene el apuntador al primer elemento del arreglo
+		
 		sw $t0, ($t2)
 		sw $t1, 4($t2)	
 		sw $zero,8($t2) # Se actualiza el atributo "siguiente" del elemento insertado
-		sw $t2,($a0)	   # Se actualiza el primer elemento del tablero
+		sw $t2,($a0)	# Se actualiza el primer elemento del tablero
 		sw $t2,8($a0)   # Se actualiza el ultimo elemento insertado a la lista
 		lw $t6,4($a0)
 		addi $t6,$t6,1
@@ -1118,6 +1292,9 @@ imprimirTablero:
 	lw $t0, ($a0)  # $t0 contiene la direccion del primer elemento del tablero
 	lw $t1, 4($a0) # $t1 contiene el numero de elementos del tablero 
 	lw $t2, 8($a0) # $t2 contiene la direccion del ultimo elemento del tablero
+
+	imprimir_t(raya)
+	imprimir_t(Tjuego)
 	
 	imprimeFichasTablero:
 
@@ -1142,11 +1319,13 @@ imprimirTablero:
 
 			imprimir_t(parentesisCierra)
 
-			lw $t0, 8($t0)
+			lw $t0, 8($t0) # Pasa al siguiente elemento
 			addi $t1,$t1,-1
 			bnez $t1,imprimeFichasTablero
 
 	imprimir_t(saltoDeLinea)
+	imprimir_t(raya)
+
 
 	jr $ra
 
@@ -1170,8 +1349,9 @@ VerificarJugada:  # FALTA
 	move $t2 $a1
 	move $t3 $a2
 	
-	beq $t3 1 SeDebeJugarLaCochina  # Si estamos en la primera ronda el jugador debe sacar la cochina
-	bne $t3 1 RevisarJugada
+	lw $t3 4($t2) # Numero de elementos que hay en el tablero
+	beqz $t3 SeDebeJugarLaCochina  # Si estamos en la primera ronda el jugador debe sacar la cochina
+	bnez  $t3  RevisarJugada
 	SeDebeJugarLaCochina:
 	
 		lw $t4 ($t1)
@@ -1311,7 +1491,7 @@ VerificarSiSePuedeJugar:  # FALTA
 	# Registros de entrada:
 	#	- $a0 : Direccion del arreglo de fichas del jugador
 	#       - $a1 : Direccion de la cabecera del tablero
-	#	- $a2 : Direccion del arreglo que posee el numero de fichas del jugador
+	#	- $a2 : Numero de fichas del jugador
 	# Registros de salida:
 	#	- $v0 : Retorna 1 si puede jugar y 0 si no
 	#
@@ -1331,14 +1511,14 @@ VerificarSiSePuedeJugar:  # FALTA
 	VerificarLasFichas:
 	
 		lw $t3 ($t2) # Direccion del primer elemento del tablero (extremo izquierdo)
-		lw $t4 8($2) # Direccion del ultimo elemento del tablero (extremo derecho)
+		lw $t4 8($t2) # Direccion del ultimo elemento del tablero (extremo derecho)
 		
 		lw $t5 ($t3) # Elemento jugable en el extremo izquierdo del tablero
 		lw $t6 4($t4)# Elemento jugable en el extremo derecho del tablero
 		
 		# Recorremos todas las fichas del jugador para ver si es posible que juegue
 		
-		lw $t3 ($a2) # Numero de fichas del jugador 
+		move $t3 $a2	 # Numero de fichas del jugador 
 		li $v0 0 	# Inicializo $v0 en 0
 		
 		loopFichas:
@@ -1378,24 +1558,200 @@ VerificarSiSePuedeJugar:  # FALTA
 				addi $t3 $t3 -1
 				bnez $t3 loopFichas
 			jr $ra
-	
 
-#-----------------------------------------------------------------------------#
+#------------------------------------------------------#
+ImprimirMensajeDePaso:
 
-sumarPuntosN:  # FALTA
-	#
-	# Descripcion de la funcion: 
-	#	Suma los puntos de los jugadores en caso
-	#	de que un jugador se quede sin fichas.
-	# Registros de entrada:
-	#	- $a0 : Direccion del arreglo de jugadores
-	#	- $a1 : Numero correspondiente al grupo ganador
-	# Registros de salida:
-	#	- Ninguno
+	move $t1 $a0
+	imprimir_t(mensaje)
+	imprimir_i($t1)
+	imprimir_t(paso)
 	
 	jr $ra
+	
+#------------------------------------------------------#
+SumarFichas:
+
+	#
+	# Descripcion de la funcion: 
+	#	Recibe el arreglo de jugadores y un numero correspondiente a un jugador
+	#    .y calcula la suma de todas las piedras del jugador dado y de su pareja
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
+	#       - $a1 : Numero correspondiente a un jugador
+	# Registros de salida:
+	#	- $v0 : Suma total de las piedras de ese jugador
+	#
+		
+	move $t1 $a0 #Direccion del arreglo de los jugadores
+	move $t2 $a1 # Numero correspondiente al jugador
+	
+	# Calculamos el desplazamiento y lo guardo en $t1:
+	
+
+		li $t3,4  # Tamano palabra
+		li $t4,2  # Columna que nos interesa
+		li $t5,3  # Numero columna
+		
+		mult $t3,$t5
+		mflo $t6 # $t6 = TamanoPalabra*NumeroColumna
+
+		mult $t4,$t3
+		mflo $t7 # $t5 = Columna que nos interesa [2]*TamanoPalabra
+
+		mult $t2 $t6  # i*( TamanoPalabra*NumeroColumna)
+		mflo $t8
+
+		add $t4 $t7 $t8  # Dezamiento
+		add $t1 $t1 $t4 #Realizo el dsplazamiento
+		
+		lw $t1 ($t1) # Obtengo la direccion del arreglo
+				
+	# Recorremos todas las fichas del jugador para sumar su contenido
+		
+	li $t3 7	# Iterador
+	li $v0 0 	# Inicializo $v0 en 0
+		
+	loopSumaFichas:
+		
+			lw $t7 ($t1) # Contenido del arreglo de fichas
+			beqz $t7 Siguiente3
+			bnez $t7 SumarFicha
+			
+			Siguiente3:
+				addi $t1 $t1 4
+				addi $t3 $t3 -1
+				bnez $t3 loopSumaFichas
+				beqz $t3 regresar2
+				
+			SumarFicha:
+
+				lw $t8 ($t7)	# Numero de la ficha
+				lw $t9 4($t7)	# Numero de la ficha
+				
+				add $t8 $t8 $t9
+				
+				add $v0 $v0 $t8 # Sumo los numeros de la pieza actual 
+				
+				addi $t1 $t1 4
+				addi $t3 $t3 -1
+				bnez $t3 loopSumaFichas
+			
+			regresar2:	
+				jr $ra
+				
+
+#------------------------------------------------------#
+SumarPuntosNormal:
+	#
+	# Descripcion de la funcion: 
+	#	Asigna los puntos correspondientes al equipo ganador
+	# Registros de entrada:
+	#	- $a0 : Perdedor 1
+	# 	Registros de salida:
+	#	- $v0 : Numero de puntos a asignar
+	
+	move $t1 $a0 # Perdedor1
+	
+	
+	# Se va a calcular el numero del perdedor 2
+	
+	beq $t1 2 esCero
+	beq $t1 3 esUno
+	
+	addi $t2 $t1 2 # Numero correspondiente al perdedro 2
+	
+	esCero:
+		li $t2 0 # Numero correspondiente al perdedor 2
+		b CalcularPuntos
+	esUno:
+		li $t2 1 # Numero correspondiente al perdedor 2
+		b CalcularPuntos
+		
+	CalcularPuntos:
+		
+		# Guardar $t1 y $t2 y ra (prologo)
+		move $fp, $sp 
+		addi $sp $sp -4
+		sw $fp, 4($sp) 
+		addi $sp, $sp, -4
+		sw $ra, 4($sp)
+		addi $sp, $sp, -4
+		sw $t1 4($sp)
+		addi $sp, $sp, -4
+		sw $t2 4($sp)
+
+		lw $a0 jugadores
+		move $a1 $t1
+		jal SumarFichas
+		move $t3 $v0
+		
+		# Desempilar $t1 y $t2 y ra epilogo
+		lw $t2 4($sp)
+		addi $sp, $sp, 4
+		lw $t1 4($sp)
+		addi $sp, $sp, 4
+		lw $ra, 4($sp) 
+		addi $sp, $sp, 4
+		lw $fp, 4($sp)
+		addi $sp, $sp, 4
+		
+		
+
+		# Guardar $t1 , $t2 , $t3 y ra	
+		
+		move $fp, $sp 
+		addi $sp $sp -4
+		sw $fp, 4($sp) 
+		addi $sp, $sp, -4
+		sw $ra, 4($sp)
+		addi $sp, $sp, -4
+		sw $t1 4($sp)
+		addi $sp, $sp, -4
+		sw $t2 4($sp)
+		addi $sp, $sp, -4
+		sw $t3 4($sp)
+				
+		lw $a0 jugadores
+		move $a1 $t2
+		jal SumarFichas
+		move $t4 $v0
+		
+		# Desempilar $t1 , $t2 , $t3 y ra
+		
+		lw $t3 4($sp)
+		addi $sp, $sp, 4	
+		lw $t2 4($sp)
+		addi $sp, $sp, 4
+		lw $t1 4($sp)
+		addi $sp, $sp, 4
+		lw $ra, 4($sp) 
+		addi $sp, $sp, 4
+		lw $fp, 4($sp)
+		addi $sp, $sp, 4
+			
+		
+	add $v0 $t3 $t4	
+	jr $ra
+	
+#------------------------------------------------------#
+
+#SumarPuntosTrancado:
+
+	#
+	# Descripcion de la funcion: 
+	#	Busca cual de los equipos suma la mayor cantidad de puntos con las piedras
+	#
+	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
+	#       
+	# Registros de salida:
+	#	* $v0 : Estructura que almacena:
+	#	- Primer elemento: Acumulado del equipo perdedor
+
 
 #-----------------------------------------------------------------------------#
+
 sumarPuntosT:  # FALTA
 	#
 	# Descripcion de la funcion: 
@@ -1585,15 +1941,15 @@ limpiarTablero: # FALTA
 	# 	vacio 
 	# Registros de entrada:
 	#	- $a0 : Direccion de la cabecera del tablero 
-	#	- $a1 : Direccion del primer elemento del arreglo del tablero
 	# Registros de salida:
-	#	- $v0 : Cabecera del tablero inicializada
+	#	- Ninguno
 	#
 	
-	lw $t0,($a0)  	 # Apuntador al primer elemento del tablero
-	lw $t1,4($a0) 	 # Numero de elementos del tablero
-	lw $t2, 8($a0)  # Apuntador al ultimo elemento del tablero
-	li $t4,0		 # Valor 0 para inicializar el tablero
+	lw $t0,($a0)  	  # Apuntador al primer elemento del tablero
+	lw $t1,4($a0) 	  # Numero de elementos del tablero
+	lw $t2, 8($a0)   # Apuntador al ultimo elemento del tablero
+	lw $a1,12($a0) # Apuntador al primer elemento del arreglo del tablero
+	li $t4,0		  # Valor 0 para inicializar el tablero
 		
 	cicloLimpiar:
 
@@ -1612,9 +1968,7 @@ limpiarTablero: # FALTA
 	sw $a1,($a0)  	 # Se inicializa el primer elemento del tablero
 	sw $t4, 4($a0)  # Se inicializan en 0 los elementos del tablero
 	sw $a1,8($a0) 	 # Se inicializa el ultimo elemento del tablero
-		
-	move $v0,$a0
-
+	
 	jr $ra
 
 #-----------------------------------------------------------------------------#
