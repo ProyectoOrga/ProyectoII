@@ -1,30 +1,39 @@
 #
 # ProyectoII.asm
 #
-# Descripcion:
+# Descripcion: Juego de Domino con interfaz
+# por consola para 4 jugadores
+# escrito en MIPS Assembly
 #
-# Nombres: 
+# Nombres:
 #    Alejandra Cordero / Carnet: 12-10645
 #    Pablo Maldonado   / Carnet: 12-10561
 #
 # Ultima modificacion: 17/02/2015
 #
 
+########################################################
+#                  SECCION DE DATOS                    #                      
+########################################################
+
 		.data
 
 jugadores:			.word     0
 tablero:				.word     0
+arregloTablero:		.word 	0
 rondas: 				.word	0
 nuevoJuego:			.word     0
 fichas:				.word     0
 numeroFichasJugadores: 	.word 	0
 tieneCochina:			.word 	0
-turnoRonda:			.word	0  
+turnoRonda:			.word	0 
 turnoActual:			.word	0  
 piedrasArchivo:		.space  169
 nombre:				.space   20
 letra:				.word     0
 nombreArchivo:			.asciiz "/home/prmm95/Desktop/CI3815/Proyectos/ProyectoII/PIEDRAS"
+errorLecturaA:			.asciiz "Error: Problemas con el archivo de entrada. \n"
+m_finalizarEjec:		.asciiz "Finalizara la ejecucion del programa."
 parentesisAbre:		.asciiz "("
 parentesisCierra:		.asciiz ")"
 punto:				.asciiz "."
@@ -51,33 +60,48 @@ por:					.asciiz "por "
 #                DECLARACION DE MACROS                 #                      
 ########################################################
 
-.macro imprimir_t (%texto) #Macro para imprimir un texto
+.macro imprimir_t (%texto) 
+	# Descripcion: imprime un texto almacenado 
+	# en una etiqueta.
 	li 		$v0, 4
 	la		$a0, %texto
 	syscall
 .end_macro
+
+#------------------------------------------------------#
 		
-.macro imprimir_i (%numero) #Macro para imprimir un entero
+.macro imprimir_i (%numero) 
+	# Descripcion: imprime un entero
 	li		$v0, 1
 	move		$a0, %numero
 	syscall
 .end_macro
 
-.macro reservarEspacio(%espacio) # Macro para reservar espacio de memoria
+#------------------------------------------------------#
+
+.macro reservarEspacio(%espacio) 
+	# Descripcion: Reserva el espacio de memoria 
+	# indicado.
 	li		$v0  9
 	li		$a0  %espacio
 	syscall
 .end_macro 
 
+#------------------------------------------------------#
 
 .macro finalizarPrograma()
+	# Descripcion: Finaliza la ejecucion del programa.
 	li		$v0 10
 	syscall
 .end_macro
 
+#------------------------------------------------------#
+
 .macro generarSemilla()
-	li 		$v0, 40	# Se configura la semilla del generador de numeros aleatorios
-	li 		$a0, 0	# del generador de numeros aleatorios
+	# Descripcion: Configura la semilla del generador 
+	# de numeros aleatorios.
+	li 		$v0, 40
+	li 		$a0, 0
 	li 		$a1, 0
 	syscall		
 .end_macro
@@ -87,10 +111,12 @@ por:					.asciiz "por "
 ########################################################
 
 main:
-		# Se configura la semilla delgenerador de numeros aleatorios:		
+
+		# Se configura la semilla del generador de numeros aleatorios:		
 		generarSemilla()
 
-		jal 		leerArchivoPiedras # Se retorna en $v0 la direccion de los datos leidos
+		jal 		leerArchivoPiedras 
+		# Se retorna en $v0 la direccion de los datos leidos
 		move 	$a0,$v0
 		jal 		extraerPiedras
 		
@@ -118,7 +144,8 @@ main:
 
 		# Se crea la clase tablero
 		jal 		CrearClaseTablero
-		sw 		$v0 tablero
+		sw 		$v0, tablero
+		sw 		$v1, arregloTablero
 
 		li 		$a0 1
 		sw		$a0 rondas 	  # NumeroRondas = 1
@@ -293,54 +320,77 @@ loopPrincipal:
 ########################################################
 
 leerArchivoPiedras:
-
+		#
 		# Descripcion de la funcion:
-		# Planificador de registros:
+		# 	Abre el archivo PIEDRAS en modo lectura
+		#    y devuelve la direccion que almacena 
+		# 	la informacion leida del archivo.
+		# Registros de entrada:
+		#	- Ninguno
+		# Registros de salida:
+		#	- $v0 : Direccion que almacena la informacion leida
+		#
 
-
-		li		$v0, 13					# Abro el archivo
+		# Se abre el archivo PIEDRAS en modo de solo lectura ($a1 = 0):
+		li		$v0, 13				
 		la		$a0, nombreArchivo	
-		li		$a1, 0					# Modo lectura
+		li		$a1, 0				
 		li		$a2, 0	
-		syscall							# Al hacer el syscall el file descriptor queda en $v0
+		syscall					# $v0 almacena el file descriptor				
 		
-		blt		$v0, $zero, errorLectura		# Si hay error termino la ejecucion
-		move		$t0, $v0					# Respaldo el file descriptor en $t0
+		# Si hay problemas de lectura se finaliza la ejecucion del programa
+		# y se muestra un mensaje al usuario:
+		blt		$v0, $zero, errorLectura		
 
+		# $t0 contiene ahora el file descriptor para el proximo syscall:
+		move		$t0, $v0					
+
+		# Se realiza la lectura del archivo y se almacena la informacion
+		# en piedras archivo:
 		li		$v0, 14					# Leo el archivo
 		move 	$a0, $t0
 		la 		$a1, piedrasArchivo
 		li 		$a2, 169
 		syscall
 		
-		blt 		$v0, $zero, cerrar			# Si hay error cierro el archivo y termino la ejecucion 
-		move 	$t1, $v0
+		# Si ocurre un error durante la lectura del archivo, el mismo
+		# se cierra, y se finaliza la ejecucion del programa con un mensaje
+		# al usuario:
+		blt 		$v0, $zero, cerrar	
+
+		# Se mueve a $v0 el file descriptor (retorno de la funcion)
 			
 		la $v0,piedrasArchivo
-
-		#imprimir_t(mensaje)
-		#imprimir_i($t1)
-		#imprimir_t(saltoDeLinea)
-		#imprimir_t(texto)		
-		#imprimir_t(piedrasArchivo)
 
 		jr $ra
 
 cerrar:		
-
+		# Se cierra el archivo:
 		li		$v0, 16
 		move		$a0, $t0	
 		syscall
 						
 errorLectura:		
-
-		li 		$v0, 10
-		syscall	
+		# Se imprime un mensaje de error de lectura del 
+		# archivo y se finaliza la ejecucion del programa:
+		imprimir_t(errorLecturaA)
+		imprimir_t(m_finalizarEjec)
+		finalizarPrograma()
 	
 #------------------------------------------------------#
 
 extraerPiedras:
-		
+		#
+		# Descripcion de la funcion:
+		# 	Abre el archivo PIEDRAS en modo lectura
+		#    y devuelve la direccion que almacena 
+		# 	la informacion leida del archivo.
+		# Registros de entrada:
+		#	- Ninguno
+		# Registros de salida:
+		#	- $v0 : Direccion que almacena la informacion leida
+		#
+
 		# Descripcion de la funcion:
 		# Planificador de registros:
 		#   Entrada: 
@@ -783,6 +833,9 @@ CrearClaseTablero:
 	sw		$zero, 8($v0) # Primer elemento del tablero
 	
 	reservarEspacio(336)
+
+	# Se mueve a $v1 (valor de retorno) la direccion del primer elemento del arreglo
+	move $v1 $v0
 	
 	# Se inicializan las direcciones del primer y ultimo elemento del tablero
 	sw		$v0 ($t1)     
@@ -793,10 +846,9 @@ CrearClaseTablero:
 	#sw $t2,4($v0)
 	#sw $zero,8($v0)
 	
-
 	# Se mueve a $v0 (valor de retorno) la cabecera creada
 	move		$v0 $t1
-
+	
 	jr $ra
 
 #------------------------------------------------------#
@@ -826,6 +878,7 @@ CambiarTurno:
 		jr $ra
 
 #------------------------------------------------------#
+
 mostrarFichas:
 
 		# Registros de entrada:
@@ -1269,7 +1322,7 @@ VerificarSiSePuedeJugar:
 	#	- $v0 : Retorna 1 si puede jugar y 0 si no
 	#
 	
-	move $t1 $a0 #Direccion del arreglo de fichas del jugador
+	move $t1 $a0 # Direccion del arreglo de fichas del jugador
 	move $t2 $a1 # Direccion de la cabecera del tablero
 	
 	lw $t3 4($t2) # Numero de elementos del tablero
@@ -1331,52 +1384,7 @@ VerificarSiSePuedeJugar:
 				addi $t3 $t3 -1
 				bnez $t3 loopFichas
 			jr $ra
-				
-#------------------------------------------------------#
-
-#SumarFichas:
-
-	#
-	# Descripcion de la funcion: 
-	#	Recibe el arreglo de jugadores y un numero correspondiente a un jugador
-	#    .y calcula la suma de todas las piedras del jugador dado y de su pareja
-	# Registros de entrada:
-	#	- $a0 : Direccion del arreglo de jugadores
-	#       - $a1 : Numero correspondiente a un jugador
-	# Registros de salida:
-	#	- $v0 : Suma total de las piedras de un equipo
-	#
 	
-#------------------------------------------------------#
-
-#AsignarPuntos:
-	#
-	# Descripcion de la funcion: 
-	#	Asigna los puntos correspondientes al equipo ganador
-	# Registros de entrada:
-	#	- $a0 : Ganador 1
-	#       - $a1 : Ganador 2
-	# Registros de salida:
-	#
-	
-#------------------------------------------------------#
-
-#BuscarGanador:
-
-	#
-	# Descripcion de la funcion: 
-	#	Busca cual de los equipos suma la mayor cantidad de puntos con las piedras
-	#
-	# Registros de entrada:
-	#	- $a0 : Direccion del arreglo de jugadores
-	#       
-	# Registros de salida:
-	#	* $v0 : Estructura que almacena:
-	#	- Primer elemento: Acumulado del equipo perdedor
-	#	- Ganador 1
-	# 	- Ganador 2
-
-
 
 #------------------------------------------------------#
 
@@ -1386,8 +1394,12 @@ sumarPuntosN:
 	#	Suma los puntos de los jugadores en caso
 	#	de que un jugador se quede sin fichas.
 	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
+	#	- $a1 : Numero correspondiente al grupo ganador
 	# Registros de salida:
-	#
+	#	- Ninguno
+	
+	jr $ra
 
 #------------------------------------------------------#	
 
@@ -1397,8 +1409,124 @@ sumarPuntosT:
 	#	Suma los puntos de los jugadores en caso
 	# 	de que se tranque una partida.
 	# Registros de entrada:
+	#	- $a0 : Direccion del arreglo de jugadores
 	# Registros de salida:
+	#	- Ninguno
 	#
+	
+	# NOTA: que pasa si los numeros que suman en trancar son iguales???
+	# Ejemplo: suma0 = 20 y suma1 = 20 ?? 
+	
+	li $t0,0 # Variable de iteracion de cicloSumarT
+	li $t1,0 # Inicializacion de la variable suma0
+	li $t2,0 # Inicializacion de la variable suma1
+	
+	# Ahora los registros $a's tienen la direccion de los arreglos de los jugadores
+	move $a1,$a0  # Jugador 1
+	lw $a1,20($a0)
+
+	move $a2,$a0  # Jugador 2
+	lw $a2,32($a0)
+
+	move $a3,$a0  # Jugador 3
+	lw $a3,44($a0)
+
+		
+	cicloSumarT:
+
+		beqz $t0,primeraVez
+		bnez $t0,sumarNum
+		
+			primeraVez:
+				lw $t4,8($a0)     # $t4 contiene la direccion del arreglo de fichas
+				lw $t6,($a2)      # $t6 contiene la direccion del arreglo de fichas
+				b sumarNum
+
+		sumarNum:
+			# Se suman las fichas del jugador0 ($t4) en suma0 ($t1):
+		
+			lw $t5,($t4)      # Se suma el primer elemento de la ficha
+			add $t1,$t1,$t5
+
+			lw $t4,8($a0)	   # $t4 contiene la direccion del arreglo de fichas
+			lw $t5,4($t4)     # Se suma el segundo elemento de la ficha
+			add $t1,$t1,$t5 
+		
+			lw $t4,4($t4)     # Se mueve al siguente elemento de la ficha
+	
+			# Se suman las fichas del jugador2 ($t6) en suma0 ($t1):
+	
+			lw $t5,($t6)      # Se suma el primer elemento de la ficha
+			add $t1,$t1,$t5
+
+			lw $t6,($a2)	   # $t6 contiene la direccion del arreglo de fichas
+			lw $t5,4($t6)     # Se suma el segundo elemento de la ficha
+			add $t1,$t1,$t5 
+		
+			lw $t6,4($t6)     # Se mueve al siguente elemento de la ficha
+
+			# Se suman las fichas del jugador1 ($t3) en suma1 ($t2):
+
+			lw $t3,($a1)      # $t3 contiene la direccion del arreglo de fichas
+			lw $t5,($t3)      # Se suma el primer elemento de la ficha
+			add $t1,$t1,$t5
+
+			lw $t3,($a1)	   # $t3 contiene la direccion del arreglo de fichas
+			lw $t5,4($t3)     # Se suma el segundo elemento de la ficha
+			add $t1,$t1,$t5 
+			
+			lw $t3,4($t3)     # Se mueve al siguente elemento de la ficha
+	
+			# Se suman las fichas del jugador3 ($t7) en suma1 ($t2):
+
+			lw $t7,($a3)     # $t7 contiene la direccion del arreglo de fichas
+			lw $t5,($t7)      # Se suma el primer elemento de la ficha
+			add $t1,$t1,$t5
+
+			lw $t7,($a3)	   # $t7 contiene la direccion del arreglo de fichas
+			lw $t5,4($t7)     # Se suma el segundo elemento de la ficha
+			add $t1,$t1,$t5 
+		
+			lw $t7,4($t7)     # Se mueve al siguente elemento de la ficha
+
+			addi $t0,$t0,1
+		bne $t0,6,cicloSumarT
+
+	# $t1 (Suma0) y $t2 (Suma1)
+
+	bgt $t2,$t1,sumarT0
+	bgt $t1,$t2,sumarT1
+
+	sumarT0:	
+
+		# jugador0.puntos ($t4)
+		lw $t4,4($a0)
+		add $t4,$t4,$t2
+		sw $t4,4($a0)
+
+		# jugador2.puntos ($t6)
+		lw $t6,28($a0)
+		add $t6,$t6,$t2
+		sw $t6,28($a0)
+
+		b regresarT
+
+	sumarT1:
+		
+		# jugador1.puntos ($t3)
+		lw $t3,16($a0)
+		add $t3,$t3,$t1
+		sw $t3,16($a0)
+
+		# jugador3.puntos ($t7)
+		lw $t7,40($a0)
+		add $t7,$t7,$t1
+		sw $t7,40($a0)
+	
+		b regresarT
+	
+	regresarT:
+		jr $ra
 	
 #------------------------------------------------------#	
 
@@ -1453,9 +1581,47 @@ mezclarFichas:
 	jr $ra
 
 
+#------------------------------------------------------#
 
+limpiarTablero:
+	#
+	# Descripcion de la funcion: 
+	#	Cuando se comienza una nueva ronda 
+	#	la funcion vuelve a inicializar el tablero de juego
+	# 	vacio 
+	# Registros de entrada:
+	#	- $a0 : Direccion de la cabecera del tablero 
+	#	- $a1 : Direccion del primer elemento del arreglo del tablero
+	# Registros de salida:
+	#	- $v0 : Cabecera del tablero inicializada
+	#
+	
+	lw $t0,($a0)  	 # Apuntador al primer elemento del tablero
+	lw $t1,4($a0) 	 # Numero de elementos del tablero
+	lw $t2, 8($a0)  # Apuntador al ultimo elemento del tablero
+	li $t4,0		 # Valor 0 para inicializar el tablero
+		
+	cicloLimpiar:
 
+		sw $t4,($t0)
+		sw $t4,4($t0)
 
+		move $t5,$t0 # Temporal para inicializar el valor de "siguiente
+		lw $t0,8($a0)
+		sw $t4,8($t5)
+	
+		addi $t1,$t1,-1
+		bnez $t1,cicloLimpiar
+
+	# Luego del ciclo se actualizan los valores de la cabecera:
+
+	sw $a1,($a0)  	 # Se inicializa el primer elemento del tablero
+	sw $t4, 4($a0)  # Se inicializan en 0 los elementos del tablero
+	sw $a1,8($a0) 	 # Se inicializa el ultimo elemento del tablero
+		
+	move $v0,$a0
+
+	jr $ra
 
 #------------------------------------------------------#
 
@@ -1469,6 +1635,7 @@ RevisarPuntos:
 	# Registros de salida:
 	#	- $v0 : Indica el tipo de victoria (normal,chancleta,zapatero)
 	#	- $v1 : Indica el grupo los de ganadores
+	#
 	
 	lw $t0, 4($a0)  # Puntos del grupo 0 (Pares)
 	lw $t1, 16($a0) # Puntos del grupo 1 (Impares)
