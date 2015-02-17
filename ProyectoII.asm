@@ -65,7 +65,7 @@ por:				.asciiz "por "
 #                             DECLARACION DE MACROS                           #                      
 ###############################################################################
 
-.macro imprimir_t (%texto) 
+.macro imprimir_t(%texto) 
 	# Descripcion: imprime un texto almacenado 
 	# en una etiqueta.
 	li 		$v0, 4
@@ -75,10 +75,19 @@ por:				.asciiz "por "
 
 #-----------------------------------------------------------------------------#
 		
-.macro imprimir_i (%numero) 
+.macro imprimir_i(%numero) 
 	# Descripcion: imprime un entero
 	li		$v0, 1
 	move		$a0, %numero
+	syscall
+.end_macro
+
+#-----------------------------------------------------------------------------#
+
+.macro imprimir_r(%registro)
+	# Descripcion: imprime el contenido de un registro
+	li		$v0, 4
+	move 	$a0, %registro
 	syscall
 .end_macro
 
@@ -1559,7 +1568,8 @@ VerificarSiSePuedeJugar:  # FALTA
 				bnez $t3 loopFichas
 			jr $ra
 
-#------------------------------------------------------#
+#-----------------------------------------------------------------------------#
+
 ImprimirMensajeDePaso:
 
 	move $t1 $a0
@@ -1569,7 +1579,8 @@ ImprimirMensajeDePaso:
 	
 	jr $ra
 	
-#------------------------------------------------------#
+#-----------------------------------------------------------------------------#
+
 SumarFichas:
 
 	#
@@ -1641,7 +1652,8 @@ SumarFichas:
 				jr $ra
 				
 
-#------------------------------------------------------#
+#-----------------------------------------------------------------------------#
+
 SumarPuntosNormal:
 	#
 	# Descripcion de la funcion: 
@@ -1734,7 +1746,7 @@ SumarPuntosNormal:
 	add $v0 $t3 $t4	
 	jr $ra
 	
-#------------------------------------------------------#
+#-----------------------------------------------------------------------------#
 
 #SumarPuntosTrancado:
 
@@ -1970,6 +1982,45 @@ limpiarTablero: # FALTA
 	sw $a1,8($a0) 	 # Se inicializa el ultimo elemento del tablero
 	
 	jr $ra
+
+#-----------------------------------------------------------------------------#
+
+asignarPuntos:
+		#
+		# Descripcion de la funcion: 
+		#	Asigna a los ganadores el numero de puntos 
+		#	correspondientes de acuerdo al tipo de victoria
+		# Registros de entrada:
+		#	- $a0 : Numero de puntos a sumar
+		#	- $a1 : Arreglo de los jugadores
+		#	- $a2 : Numero que indica el grupo de los gnadores
+		# Registros de salida:
+		#	- Ninguno
+		#
+
+		beq		$a2,0,asignarGrupo0
+		beq		$a2,1,asignarGrupo1
+		
+		asignarGrupo0:
+
+				# Se asignan los puntos a los jugadores 0 y 2:
+				lw		$t0,4($a1)
+				add		$t0,$t0,$a0
+				sw		$t0,4($a1)
+				sw		$t0,28($a1)
+				b		regresarAsignar
+
+		asignarGrupo0:
+
+				# Se asignan los puntos a los jugadores 1 y 3:
+				lw		$t0,16($a1)
+				add		$t0,$t0,$a0
+				sw		$t0,4($a1)
+				sw		$t0,40($a1)
+				b		regresarAsignar
+
+		regresarAsignar:
+				jr $ra
 
 #-----------------------------------------------------------------------------#
 
