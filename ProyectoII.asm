@@ -219,6 +219,12 @@ loopPrincipal: # FALTA
 			# mezclar(piedras)
 			# repartirFichas()
 			
+			# Argumentos de entrada de la funcion RepartirFichas
+			lw $a0 jugadores
+			lw $a1 fichas
+			jal RepartirFichas
+			
+			
 			li $s1 0
 			sw $s1 nuevoJuego  # NuevoJuego=False
 			# jal CrearClaseTablero Limpiar tablero
@@ -421,13 +427,23 @@ loopPrincipal: # FALTA
 		lw $a0 turnoActual
 		jal CambiarTurno
 		
+		# Argumentos de entrada de la funcion:
 		move $a0 $v0
 		jal SumarPuntosNormal
+		# Argumento de salida
+		#	*$v0 : Puntos que se le van a asignar al equipo ganador
+		
+
+		# Argumentos de entrada de la funcion para asignar puntos:
+		move $a0 $v0
+		lw $a1 jugadores	# Equipo ganador
+		lw $a2 turnoActual	# Puntos a sumar (equipo ganador)
+		jal asignarPuntos
 
 		lw $a0,tablero
 		jal limpiarTablero	
-		#b loopPrincipal
-		b fin
+		b loopPrincipal
+		#b fin
 		
 				
 	JugadorPaso:
@@ -469,11 +485,20 @@ loopPrincipal: # FALTA
 			addi $s1 $s1 1
 			sw $s1 rondas
 			
+			lw $a0 jugadores
+			jal SumarPuntosTrancado
+			
+				
+			# Argumentos de entrada de la funcion para asignar puntos:
+			move $a0 $v0		# Puntos a sumar (equipo ganador)
+			lw $a1 jugadores	
+			move $a2 $v1		# Equipo ganador
+			jal asignarPuntos
+	
 			lw $a0,tablero
 			jal limpiarTablero
-			#b loopPrincipal
-
-			b fin
+			b loopPrincipal
+			#b fin
 
 			#FinDeLaPartida:
 				# En $a0 recibe el turno actual
@@ -1388,7 +1413,10 @@ VerificarJugada:  # FALTA
 		lw $t5 4($t1) # Valor de la ficha del jugador
 		
 		lw $t6 ($t2) # Direccion del primer elemento del tablero
+		lw $t9 4($t2) # Numero de elementos del tablero
 		lw $t7 8($t2)# Direccion del ultimo elemento del tablero
+
+		beqz $t9 esLaPrimeraJugada
 		
 		# Elemento que nos importa de la ficha del extremo izquierdo del tablero
 		lw $t6 ($t6) 
@@ -1426,6 +1454,12 @@ VerificarJugada:  # FALTA
 			li $v0 1
 			li $v1 1  # El elemento se volteara
 			li $t9 1  # El elemento se agregara a la derecha
+			b saltarMain
+
+		esLaPrimeraJugada:
+			li $v0 1
+			li $v1 0
+			li $t9 0
 			b saltarMain
 		
 	saltarMain:
@@ -1494,8 +1528,9 @@ VerificarSiSePuedeJugar:  # FALTA
 	#	Funcion que verifica si un jugador pasa o no
 	# Registros de entrada:
 	#	- $a0 : Direccion del arreglo de fichas del jugador
-	#       - $a1 : Direccion de la cabecera del tablero
+	#      - $a1 : Direccion de la cabecera del tablero
 	#	- $a2 : Numero de fichas del jugador
+	#	- $a3 : Numero de rondas
 	# Registros de salida:
 	#	- $v0 : Retorna 1 si puede jugar y 0 si no
 	#
@@ -1667,7 +1702,7 @@ SumarPuntosNormal:
 	beq $t1 3 esUno
 	
 	addi $t2 $t1 2 # Numero correspondiente al perdedro 2
-	
+	b CalcularPuntos
 	esCero:
 		li $t2 0 # Numero correspondiente al perdedor 2
 		b CalcularPuntos
@@ -1741,9 +1776,10 @@ SumarPuntosNormal:
 	add $v0 $t3 $t4	
 	jr $ra
 	
+
 #-----------------------------------------------------------------------------#
 
-#SumarPuntosTrancado:
+SumarPuntosTrancado:
 
 	#
 	# Descripcion de la funcion: 
@@ -1753,137 +1789,127 @@ SumarPuntosNormal:
 	#	- $a0 : Direccion del arreglo de jugadores
 	#       
 	# Registros de salida:
-	#	* $v0 : Estructura que almacena:
-	#	- Primer elemento: Acumulado del equipo perdedor
-
-
-#-----------------------------------------------------------------------------#
-
-sumarPuntosT:  # FALTA
-	#
-	# Descripcion de la funcion: 
-	#	Suma los puntos de los jugadores en caso
-	# 	de que se tranque una partida.
-	# Registros de entrada:
-	#	- $a0 : Direccion del arreglo de jugadores
-	# Registros de salida:
-	#	- Ninguno
-	#
+	#	* $v0 : Acumulado del equipo perdedor
+	#	* $v1: Perdedor 1
 	
-	# NOTA: que pasa si los numeros que suman en trancar son iguales???
-	# Ejemplo: suma0 = 20 y suma1 = 20 ?? 
 	
-	li $t0,0 # Variable de iteracion de cicloSumarT
-	li $t1,0 # Inicializacion de la variable suma0
-	li $t2,0 # Inicializacion de la variable suma1
 	
-	# Ahora los registros $a's tienen la direccion de los arreglos de los jugadores
-	move $a1,$a0  # Jugador 1
-	lw $a1,20($a0)
-
-	move $a2,$a0  # Jugador 2
-	lw $a2,32($a0)
-
-	move $a3,$a0  # Jugador 3
-	lw $a3,44($a0)
-
-		
-	cicloSumarT:
-
-		beqz $t0,primeraVez
-		bnez $t0,sumarNum
-		
-			primeraVez:
-				lw $t4,8($a0)     # $t4 contiene la direccion del arreglo de fichas
-				lw $t6,($a2)      # $t6 contiene la direccion del arreglo de fichas
-				b sumarNum
-
-		sumarNum:
-			# Se suman las fichas del jugador0 ($t4) en suma0 ($t1):
-		
-			lw $t5,($t4)      # Se suma el primer elemento de la ficha
-			add $t1,$t1,$t5
-
-			lw $t4,8($a0)	   # $t4 contiene la direccion del arreglo de fichas
-			lw $t5,4($t4)     # Se suma el segundo elemento de la ficha
-			add $t1,$t1,$t5 
-		
-			lw $t4,4($t4)     # Se mueve al siguente elemento de la ficha
+	li $t4 0 # Registro que almacenara el total de puntos del grupo 1
+	li $t5 0 # Registro que almacenara el total de puntos del grupo 2
 	
-			# Se suman las fichas del jugador2 ($t6) en suma0 ($t1):
-	
-			lw $t5,($t6)      # Se suma el primer elemento de la ficha
-			add $t1,$t1,$t5
+					
+	# Calcular puntos equipo 1
+	li $t1 0
+	li $t2 2
+	loopEquipo1:
 
-			lw $t6,($a2)	   # $t6 contiene la direccion del arreglo de fichas
-			lw $t5,4($t6)     # Se suma el segundo elemento de la ficha
-			add $t1,$t1,$t5 
+		# Guardar 
+		move $fp, $sp 
+		addi $sp $sp -4
+		sw $fp, 4($sp) 
+		addi $sp, $sp, -4
+		sw $ra, 4($sp)
+		addi $sp, $sp, -4
+		sw $t1 4($sp)
+		addi $sp, $sp, -4
+		sw $t2 4($sp)
+		addi $sp, $sp, -4
+		sw $t4 4($sp)
+		addi $sp, $sp, -4
+		sw $t5 4($sp)
+
+		lw $a0 jugadores
+		move $a1 $t1
+		jal SumarFichas
+		move $t3 $v0
 		
-			lw $t6,4($t6)     # Se mueve al siguente elemento de la ficha
-
-			# Se suman las fichas del jugador1 ($t3) en suma1 ($t2):
-
-			lw $t3,($a1)      # $t3 contiene la direccion del arreglo de fichas
-			lw $t5,($t3)      # Se suma el primer elemento de la ficha
-			add $t1,$t1,$t5
-
-			lw $t3,($a1)	   # $t3 contiene la direccion del arreglo de fichas
-			lw $t5,4($t3)     # Se suma el segundo elemento de la ficha
-			add $t1,$t1,$t5 
+			# Desempilar $t1 y $t2 y ra epilogo
 			
-			lw $t3,4($t3)     # Se mueve al siguente elemento de la ficha
-	
-			# Se suman las fichas del jugador3 ($t7) en suma1 ($t2):
-
-			lw $t7,($a3)     # $t7 contiene la direccion del arreglo de fichas
-			lw $t5,($t7)      # Se suma el primer elemento de la ficha
-			add $t1,$t1,$t5
-
-			lw $t7,($a3)	   # $t7 contiene la direccion del arreglo de fichas
-			lw $t5,4($t7)     # Se suma el segundo elemento de la ficha
-			add $t1,$t1,$t5 
+		lw $t5 4($sp)
+		addi $sp, $sp, 4
+		lw $t4 4($sp)
+		addi $sp, $sp, 4
+		lw $t2 4($sp)
+		addi $sp, $sp, 4
+		lw $t1 4($sp)
+		addi $sp, $sp, 4
+		lw $ra, 4($sp) 
+		addi $sp, $sp, 4
+		lw $fp, 4($sp)
+		addi $sp, $sp, 4
+			
+		add $t4 $t4 $t3 # Sumo los puntos del jugador
+		addi $t1 $t1 2  # Paso al otro jugador del equipo
+			
+		addi $t2 $t2 -1
+		bnez $t2 loopEquipo1
 		
-			lw $t7,4($t7)     # Se mueve al siguente elemento de la ficha
-
-			addi $t0,$t0,1
-		bne $t0,6,cicloSumarT
-
-	# $t1 (Suma0) y $t2 (Suma1)
-
-	bgt $t2,$t1,sumarT0
-	bgt $t1,$t2,sumarT1
-
-	sumarT0:	
-
-		# jugador0.puntos ($t4)
-		lw $t4,4($a0)
-		add $t4,$t4,$t2
-		sw $t4,4($a0)
-
-		# jugador2.puntos ($t6)
-		lw $t6,28($a0)
-		add $t6,$t6,$t2
-		sw $t6,28($a0)
-
-		b regresarT
-
-	sumarT1:
 		
-		# jugador1.puntos ($t3)
-		lw $t3,16($a0)
-		add $t3,$t3,$t1
-		sw $t3,16($a0)
+	# Calcular puntos equipo 2
+	
+	li $t1 1
+	li $t2 2
+	 loopEquipo2:
+	 
+		# Guardar 
+		move $fp, $sp 
+		addi $sp $sp -4
+		sw $fp, 4($sp) 
+		addi $sp, $sp, -4
+		sw $ra, 4($sp)
+		addi $sp, $sp, -4
+		sw $t1 4($sp)
+		addi $sp, $sp, -4
+		sw $t2 4($sp)
+		addi $sp, $sp, -4
+		sw $t4 4($sp)
+		addi $sp, $sp, -4
+		sw $t5 4($sp)
 
-		# jugador3.puntos ($t7)
-		lw $t7,40($a0)
-		add $t7,$t7,$t1
-		sw $t7,40($a0)
+		lw $a0 jugadores
+		move $a1 $t1
+		jal SumarFichas
+		move $t3 $v0
+		
+		# Desempilar $t1 y $t2 y ra epilogo
+			
+		lw $t5 4($sp)
+		addi $sp, $sp, 4
+		lw $t4 4($sp)
+		addi $sp, $sp, 4
+		lw $t2 4($sp)
+		addi $sp, $sp, 4
+		lw $t1 4($sp)
+		addi $sp, $sp, 4
+		lw $ra, 4($sp) 
+		addi $sp, $sp, 4
+		lw $fp, 4($sp)
+		addi $sp, $sp, 4
+			
+		add $t5 $t5 $t3 # Sumo los puntos del jugador
+		addi $t1 $t1 2  # Paso al otro jugador del equipo
+			
+		addi $t2 $t2 -1
+		bnez $t2 loopEquipo2
 	
-		b regresarT
+	bgt $t5 $t4 GanoEquipo1	# Equipo 1 gano	
+	bgt $t4 $t5 GanoEquipo2 # Equipo 2 gano
 	
-	regresarT:
+	GanoEquipo1:
+		move $v0 $t5
+		li $v1 0
+		b regresoM
+		
+	GanoEquipo2:
+		move $v0 $t4
+		li $v1 1
+		b regresoM
+	
+	regresoM:
+		
 		jr $ra
-	
+
+
 #-----------------------------------------------------------------------------#
 
 mezclarFichas:
@@ -1988,13 +2014,16 @@ asignarPuntos:
 		# Registros de entrada:
 		#	- $a0 : Numero de puntos a sumar
 		#	- $a1 : Arreglo de los jugadores
-		#	- $a2 : Numero que indica el grupo de los gnadores
+		#	- $a2 : Numero de un jugador que indica a cual grupo
+		#	se le asignaran los puntos
 		# Registros de salida:
 		#	- Ninguno
 		#
 
 		beq		$a2,0,asignarGrupo0
 		beq		$a2,1,asignarGrupo1
+		beq		$a2,2,asignarGrupo0
+		beq		$a2,3,asignarGrupo1
 		
 		asignarGrupo0:
 
@@ -2010,7 +2039,7 @@ asignarPuntos:
 				# Se asignan los puntos a los jugadores 1 y 3:
 				lw		$t0,16($a1)
 				add		$t0,$t0,$a0
-				sw		$t0,4($a1)
+				sw		$t0,16($a1)
 				sw		$t0,40($a1)
 				b		regresarAsignar
 
