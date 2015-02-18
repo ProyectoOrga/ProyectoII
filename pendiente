@@ -2,14 +2,15 @@ Pendiente:
 
 1) Hacer que el jugador pueda decidir si juega por la izquierda o por la
    derecha
-2) Asignar puntos a los jugadores
-3) Sumar puntos a los jugadores 
 4) Probar ciclo principal
-5) Probar lo de la broma que mezcla las fichas
-6) Limpiar tablero
 7) Convenciones
 8) Informe (hay que ponerle lo del shift vs lb)
-9) Hacer un macro de registros(?)
+9) Hacer un macro de registros(?) // Reemplazar 
 10) Macro de prologo y epilogo 
 11) "podria ser" -> nombre de jugador 
 
+hacer buscarNombre 
+
+hay que arreglar que cada vez que se inicia una nueva ronda se 
+pide un nuevo espacio para el arreglo del numero de fichas de los 
+jugadores
