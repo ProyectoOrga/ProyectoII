@@ -183,7 +183,6 @@ main:  # FALTA
 #########################################################
  
 loopPrincipal: # FALTA
-
 	
 		# Se verifica si los puntos del grupo 1 son mayores o iguales que 100
 		lw 		$s1 jugadores
@@ -411,8 +410,6 @@ loopPrincipal: # FALTA
 				
 	SumarPuntos:
 	
-	
-				
 		li $s1 1
 		sw $s1 nuevoJuego  # NuevoJuego=True
 			
@@ -420,8 +417,6 @@ loopPrincipal: # FALTA
 		addi $s1 $s1 1
 		sw $s1 rondas
 	
-		
-		
 		# Argumentos de entrada de la funcion CambiarTunro
 		lw $a0 turnoActual
 		jal CambiarTurno
@@ -429,8 +424,8 @@ loopPrincipal: # FALTA
 		move $a0 $v0
 		jal SumarPuntosNormal
 
-		#lw $a0,tablero
-		#jal limpiarTablero	
+		lw $a0,tablero
+		jal limpiarTablero	
 		#b loopPrincipal
 		b fin
 		
@@ -474,8 +469,8 @@ loopPrincipal: # FALTA
 			addi $s1 $s1 1
 			sw $s1 rondas
 			
-			#lw $a0,tablero
-			#jal limpiarTablero
+			lw $a0,tablero
+			jal limpiarTablero
 			#b loopPrincipal
 
 			b fin
@@ -1969,7 +1964,7 @@ limpiarTablero: # FALTA
 		sw $t4,4($t0)
 
 		move $t5,$t0 # Temporal para inicializar el valor de "siguiente
-		lw $t0,8($a0)
+		lw $t0,8($t0)
 		sw $t4,8($t5)
 	
 		addi $t1,$t1,-1
@@ -2010,7 +2005,7 @@ asignarPuntos:
 				sw		$t0,28($a1)
 				b		regresarAsignar
 
-		asignarGrupo0:
+		asignarGrupo1:
 
 				# Se asignan los puntos a los jugadores 1 y 3:
 				lw		$t0,16($a1)
